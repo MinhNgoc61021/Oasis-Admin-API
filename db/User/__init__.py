@@ -140,7 +140,7 @@ class User(Base):
     roles = relationship('Role', secondary=t_user_role)
 
     @classmethod
-    def getRecords(cls, page_index, per_page, sort_field, sort_order):
+    def getRecord(cls, page_index, per_page, sort_field, sort_order):
         sess = Session()
         try:
             query = sess.query(User).order_by(getattr(
@@ -174,6 +174,29 @@ class User(Base):
                      cls.updated_at: updated_at,
                      cls.actived: update_actived,
                      cls.is_lock: update_is_lock})
+                sess.commit()
+                return True
+            else:
+                return False
+        except:
+            sess.rollback()
+            raise
+        finally:
+            sess.close()
+
+    @classmethod
+    def createRecord(cls, username, name, email, create_at, actived, is_lock):
+        sess = Session()
+        try:
+            if sess.query(User).filter(cls.username == username).scalar() is None:
+                new_user = User(username=username,
+                                name=name,
+                                email=email,
+                                password=generate_password_hash(username).decode('utf-8'),
+                                created_at=create_at,
+                                actived=actived,
+                                is_lock=is_lock)
+                sess.add(new_user)
                 sess.commit()
                 return True
             else:

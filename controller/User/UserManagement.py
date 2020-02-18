@@ -20,7 +20,7 @@ def get_records():
         sort_field = request.args.get('sort_field')
         sort_order = request.args.get('sort_order')
         print(request.args)
-        record = User.getRecords(page_index, per_page, sort_field, sort_order)
+        record = User.getRecord(page_index, per_page, sort_field, sort_order)
 
         return jsonify({
             'status': 'success',
@@ -37,9 +37,19 @@ def get_records():
 @user.route('/create-record', methods=['POST'])
 def create():
     try:
-        newRoomName = request.get_json().get('newRoomName')
-        newMaxcapacity = request.get_json().get('newMaxcapacity')
+        new_user = request.get_json()
+        username = new_user.get('new_username')
+        name = new_user.get('new_name')
+        email = new_user.get('new_email')
+        create_at = datetime.now(pytz.timezone('Asia/Ho_Chi_Minh')).strftime("%Y-%m-%d %H:%M:%S")
+        actived = new_user.get('new_actived')
+        is_lock = new_user.get('new_is_lock')
 
+        isCreated = User.createRecord(username, name, email, create_at, actived, is_lock)
+        if isCreated is True:
+            return jsonify({'status': 'success'}), 200
+        else:
+            return jsonify({'status': 'already-exist'}), 202
     except:
         return jsonify({'status': 'bad-request'}), 400
 
