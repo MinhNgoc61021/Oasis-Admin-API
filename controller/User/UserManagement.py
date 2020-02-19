@@ -36,27 +36,23 @@ def get_records():
 
 @user.route('/create-record', methods=['POST'])
 def create():
-    try:
         new_user = request.get_json()
         username = new_user.get('new_username')
         name = new_user.get('new_name')
         email = new_user.get('new_email')
+        permission = new_user.get('new_permission')
         create_at = datetime.now(pytz.timezone('Asia/Ho_Chi_Minh')).strftime("%Y-%m-%d %H:%M:%S")
         actived = new_user.get('new_actived')
         is_lock = new_user.get('new_is_lock')
 
-        isCreated = User.createRecord(username, name, email, create_at, actived, is_lock)
+        isCreated = User.createRecord(username, name, email, create_at, permission, actived, is_lock)
         if isCreated is True:
             return jsonify({'status': 'success'}), 200
         else:
             return jsonify({'status': 'already-exist'}), 202
-    except:
-        return jsonify({'status': 'bad-request'}), 400
-
 
 @user.route('/update-record', methods=['PUT'])
-def update_student_info_record(current_user):
-    try:
+def update_record():
         new_update = request.get_json()
         user_id = new_update.get('user_id')
         username = new_update.get('update_username')
@@ -66,13 +62,18 @@ def update_student_info_record(current_user):
         actived = new_update.get('update_actived')
         is_lock = new_update.get('update_is_lock')
 
-        isUpdated = User.updateRecord(user_id, username, name, email, updated_at, actived, is_lock)
+        isUpdated = User.updateRecord(int(user_id), username, name, email, updated_at, actived, is_lock)
         if isUpdated is True:
             return jsonify({'status': 'success'}), 200
         else:
             return jsonify({'status': 'already-exist'}), 202
-    except:
-        return jsonify({'status': 'bad-request'}), 400
 
-# @user.route('/remove-record', methods=['DELETE'])
-# def remove:
+
+@user.route('/delete-record', methods=['DELETE'])
+def delete():
+        delUser = request.get_json()
+        ID = delUser.get('delUserID')
+        print(request.get_json())
+        User.deleteRecord(ID)
+
+        return jsonify({'status': 'success'}), 200

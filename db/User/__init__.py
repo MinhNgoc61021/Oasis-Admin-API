@@ -167,13 +167,49 @@ class User(Base):
                     or_(cls.username == update_username, cls.email == update_email),
                     cls.user_id != uid).scalar() is None:
 
-                sess.query(User).filter(user_id=uid).update(
+                sess.query(User).filter(cls.user_id == uid).update(
                     {cls.username: update_username,
                      cls.email: update_email,
                      cls.name: update_name,
                      cls.updated_at: updated_at,
                      cls.actived: update_actived,
                      cls.is_lock: update_is_lock})
+                sess.commit()
+
+                return True
+            else:
+                return False
+        except:
+            sess.rollback()
+            raise
+        finally:
+            sess.close()
+
+    @classmethod
+    def createRecord(cls, username, name, email, create_at, permission, actived, is_lock):
+        sess = Session()
+        try:
+            if sess.query(User).filter(or_(cls.username == username, cls.email == email)).scalar() is None:
+                new_user = User(username=username,
+                                name=name,
+                                email=email,
+                                password=generate_password_hash(username).decode('utf-8'),
+                                created_at=create_at,
+                                actived=actived,
+                                is_lock=is_lock)
+                sess.add(new_user)
+
+                role_id = 0
+                if permission == 'Sinh viên':
+                    role_id = 1
+                elif permission == 'Giảng viên':
+                    role_id = 2
+                else:
+                    role_id = 3
+                user_id = sess.query(User.user_id).filter(cls.username == username).one()[0]
+                new_user_role = t_user_role.insert().values({'user_id': user_id,
+                                             'role_id': role_id})
+                sess.execute(new_user_role)
                 sess.commit()
                 return True
             else:
@@ -185,22 +221,12 @@ class User(Base):
             sess.close()
 
     @classmethod
-    def createRecord(cls, username, name, email, create_at, actived, is_lock):
+    def deleteRecord(cls, id):
         sess = Session()
         try:
-            if sess.query(User).filter(cls.username == username).scalar() is None:
-                new_user = User(username=username,
-                                name=name,
-                                email=email,
-                                password=generate_password_hash(username).decode('utf-8'),
-                                created_at=create_at,
-                                actived=actived,
-                                is_lock=is_lock)
-                sess.add(new_user)
-                sess.commit()
-                return True
-            else:
-                return False
+            user = sess.query(User).filter(cls.user_id == id).one()
+            sess.delete(user)
+            sess.commit()
         except:
             sess.rollback()
             raise
