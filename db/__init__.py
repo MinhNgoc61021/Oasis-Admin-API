@@ -29,5 +29,5 @@ Session.configure(bind=engine)
 
 
 def init_db():
-    import db.Student, db.User
+    import db.Student, db.User, db.Role, db.Lecture, db.Admin, db.Course, db.Semester
     Base.metadata.create_all(bind=engine)

@@ -7,6 +7,7 @@ from flask import (
     jsonify
 )
 from db.User import User
+from db.Role import Role
 from datetime import datetime
 
 user = Blueprint('UserManagement', __name__, url_prefix='/user')
@@ -36,6 +37,7 @@ def get_records():
 
 @user.route('/create-record', methods=['POST'])
 def create():
+    try:
         new_user = request.get_json()
         username = new_user.get('new_username')
         name = new_user.get('new_name')
@@ -50,30 +52,49 @@ def create():
             return jsonify({'status': 'success'}), 200
         else:
             return jsonify({'status': 'already-exist'}), 202
+    except:
+        return jsonify({'status': 'bad-request'}), 400
+
 
 @user.route('/update-record', methods=['PUT'])
 def update_record():
+    try:
         new_update = request.get_json()
         user_id = new_update.get('user_id')
         username = new_update.get('update_username')
         name = new_update.get('update_name')
+        permission = new_update.get('update_permission')
         email = new_update.get('update_email')
         updated_at = datetime.now(pytz.timezone('Asia/Ho_Chi_Minh')).strftime("%Y-%m-%d %H:%M:%S")
         actived = new_update.get('update_actived')
         is_lock = new_update.get('update_is_lock')
 
-        isUpdated = User.updateRecord(int(user_id), username, name, email, updated_at, actived, is_lock)
+        isUpdated = User.updateRecord(int(user_id), username, name, email, updated_at, actived, is_lock, permission)
         if isUpdated is True:
             return jsonify({'status': 'success'}), 200
         else:
             return jsonify({'status': 'already-exist'}), 202
+    except:
+        return jsonify({'status': 'bad-request'}), 400
 
 
 @user.route('/delete-record', methods=['DELETE'])
 def delete():
+    try:
         delUser = request.get_json()
-        ID = delUser.get('delUserID')
-        print(request.get_json())
-        User.deleteRecord(ID)
+        user_id = delUser.get('delUserID')
+        role_id = delUser.get('delRoleID')
+        User.deleteRecord(user_id, role_id)
 
         return jsonify({'status': 'success'}), 200
+    except:
+        return jsonify({'status': 'bad-request'}), 400
+
+
+@user.route('/user_role', methods=['GET'])
+def getRole():
+    try:
+        user_id = request.args.get('user_id')
+        return jsonify({'status': 'success', 'role_id': Role.getRecord(user_id)}), 200
+    except:
+        return jsonify({'status': 'bad-request'}), 400

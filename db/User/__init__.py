@@ -1,13 +1,15 @@
-from bcrypt import hashpw, gensalt
-
 from db import Session, Base, TableMeta
 from flask_bcrypt import generate_password_hash, check_password_hash
 from marshmallow_sqlalchemy import *
 from marshmallow_sqlalchemy.fields import Nested
 from sqlalchemy import *
 from sqlalchemy.orm import relationship, backref
-from sqlalchemy.dialects.mysql import INTEGER, LONGTEXT, MEDIUMTEXT, TINYINT
+from sqlalchemy.dialects.mysql import *
 from sqlalchemy_filters import apply_pagination
+from db.Role import RoleSchema, t_user_role
+from db.Admin import Admin
+from db.Student import Student
+from db.Lecture import Lecture
 
 
 # class Api(Base):
@@ -64,23 +66,6 @@ from sqlalchemy_filters import apply_pagination
 #     name = Column(String(255), nullable=False)
 #
 #
-class Role(Base):
-    __tablename__ = 'role'
-
-    role_id = Column(INTEGER(11), primary_key=True)
-    code = Column(String(255), nullable=False)
-    name = Column(String(255), nullable=False)
-
-    users = relationship('User', secondary='user_role', lazy='dynamic')
-
-
-# class Semester(Base):
-#     __tablename__ = 'semester'
-#
-#     semester_id = Column(INTEGER(11), primary_key=True)
-#     name = Column(String(255), nullable=False)
-#     created_at = Column(TIMESTAMP, server_default=text("CURRENT_TIMESTAMP"))
-#     updated_at = Column(TIMESTAMP, server_default=text("CURRENT_TIMESTAMP"))
 #
 #
 # class UploadFile(Base):
@@ -115,11 +100,6 @@ class Role(Base):
 #     field = Column(LONGTEXT)
 #
 #
-t_user_role = Table(
-    'user_role', TableMeta,
-    Column('user_id', ForeignKey('user.user_id'), nullable=False, index=True),
-    Column('role_id', ForeignKey('role.role_id'), nullable=False, index=True)
-)
 
 
 class User(Base):
@@ -137,7 +117,6 @@ class User(Base):
     is_lock = Column(TINYINT(1), server_default=text("'1'"))
 
     # roles = relationship('Role', secondary=t_user_role, lazy='dynamic') # consider to use True or others, more info http://flask-sqlalchemy.pocoo.org/2.3/models/
-    roles = relationship('Role', secondary=t_user_role)
 
     @classmethod
     def getRecord(cls, page_index, per_page, sort_field, sort_order):
@@ -158,24 +137,40 @@ class User(Base):
             sess.close()
 
     @classmethod
-    def updateRecord(cls, uid, update_username, update_name, update_email, updated_at, update_actived, update_is_lock):
+    def updateRecord(cls, user_id, update_username, update_name, update_email, updated_at, update_actived, update_is_lock, update_permission):
         sess = Session()
         try:
             # A dictionary of key - values with key being the attribute to be updated, and value being the new
             # contents of attribute
             if sess.query(User).filter(
                     or_(cls.username == update_username, cls.email == update_email),
-                    cls.user_id != uid).scalar() is None:
+                    cls.user_id != user_id).scalar() is None:
 
-                sess.query(User).filter(cls.user_id == uid).update(
+                sess.query(User).filter(cls.user_id == user_id).update(
                     {cls.username: update_username,
                      cls.email: update_email,
                      cls.name: update_name,
                      cls.updated_at: updated_at,
                      cls.actived: update_actived,
                      cls.is_lock: update_is_lock})
-                sess.commit()
 
+                if update_permission == 'Sinh viên':
+                    role_id = 1
+                    update_student_role = t_user_role.update().where(t_user_role.c.user_id == user_id).values({'role_id': role_id})
+                    sess.execute(update_student_role)
+
+                elif update_permission == 'Giảng viên':
+                    role_id = 2
+                    update_lecture_role = t_user_role.update().where(t_user_role.c.user_id == user_id).values({'role_id': role_id})
+
+                    sess.execute(update_lecture_role)
+
+                else:
+                    role_id = 3
+                    new_admin_role = t_user_role.update().where(t_user_role.c.user_id == user_id).values({'role_id': role_id})
+                    sess.execute(new_admin_role)
+
+                sess.commit()
                 return True
             else:
                 return False
@@ -198,18 +193,24 @@ class User(Base):
                                 actived=actived,
                                 is_lock=is_lock)
                 sess.add(new_user)
-
-                role_id = 0
+                user_id = sess.query(User.user_id).filter(cls.username == username).one()
                 if permission == 'Sinh viên':
                     role_id = 1
+                    new_student_role = t_user_role.insert().values({'user_id': user_id[0],
+                                                                    'role_id': role_id})
+                    sess.execute(new_student_role)
+
                 elif permission == 'Giảng viên':
                     role_id = 2
+                    new_lecture_role = t_user_role.insert().values({'user_id': user_id[0],
+                                                                    'role_id': role_id})
+                    sess.execute(new_lecture_role)
+
                 else:
                     role_id = 3
-                user_id = sess.query(User.user_id).filter(cls.username == username).one()[0]
-                new_user_role = t_user_role.insert().values({'user_id': user_id,
-                                             'role_id': role_id})
-                sess.execute(new_user_role)
+                    new_admin_role = t_user_role.insert().values({'user_id': user_id[0],
+                                                                  'role_id': role_id})
+                    sess.execute(new_admin_role)
                 sess.commit()
                 return True
             else:
@@ -221,11 +222,30 @@ class User(Base):
             sess.close()
 
     @classmethod
-    def deleteRecord(cls, id):
+    def deleteRecord(cls, user_id, role_id):
         sess = Session()
         try:
-            user = sess.query(User).filter(cls.user_id == id).one()
-            sess.delete(user)
+            delete_user_role = t_user_role.delete().where(t_user_role.c.user_id == user_id)
+            sess.execute(delete_user_role)
+
+            if role_id == 1:
+                student = sess.query(Student).filter(Student.user_id == user_id).one()
+                sess.delete(student)
+                user = sess.query(User).filter(cls.user_id == user_id).one()
+                sess.delete(user)
+
+            elif role_id == 2:
+                lecture = sess.query(Lecture).filter(Lecture.user_id == user_id).one()
+                sess.delete(lecture)
+                user = sess.query(User).filter(cls.user_id == user_id).one()
+                sess.delete(user)
+
+            else:
+                admin = sess.query(Admin).filter(cls.user_id == user_id).one()
+                sess.delete(admin)
+                user = sess.query(User).filter(cls.user_id == user_id).one()
+                sess.delete(user)
+
             sess.commit()
         except:
             sess.rollback()
@@ -284,56 +304,14 @@ class User(Base):
 #     role = Column(INTEGER(11))
 #
 #
-class Admin(Base):
-    __tablename__ = 'admin'
-
-    admin_id = Column(INTEGER(11), primary_key=True)
-    user_id = Column(ForeignKey('user.user_id'), nullable=False, unique=True)
-
-    user = relationship('User')
-
-
-t_api_role = Table(
-    'api_role', TableMeta,
-    Column('api_id', ForeignKey('api.api_id'), nullable=False, index=True),
-    Column('role_id', ForeignKey('role.role_id'), nullable=False, index=True)
-)
-
-t_student_course = Table(
-    'student_course', TableMeta,
-    Column('student_id', ForeignKey('student.student_id'), primary_key=True, nullable=False),
-    Column('course_id', ForeignKey('course.course_id'), primary_key=True, nullable=False, index=True)
-)
-
 
 #
 #
-# class Course(Base):
-#     __tablename__ = 'course'
-#
-#     course_id = Column(INTEGER(11), primary_key=True)
-#     code = Column(String(45), nullable=False)
-#     created_at = Column(TIMESTAMP, server_default=text("CURRENT_TIMESTAMP"))
-#     updated_at = Column(TIMESTAMP, server_default=text("CURRENT_TIMESTAMP"))
-#     name = Column(String(255), nullable=False)
-#     description = Column(String(255))
-#     semester_id = Column(ForeignKey('semester.semester_id'), nullable=False, index=True)
-#
-#     semester = relationship('Semester')
-#     lectures = relationship('Lecture', secondary='lecture_course')
-#     students = relationship('Student', secondary=t_student_course)
+
 #
 #
-# class Lecture(Base):
-#     __tablename__ = 'lecture'
-#
-#     lecture_id = Column(INTEGER(11), primary_key=True)
-#     created_at = Column(TIMESTAMP, server_default=text("CURRENT_TIMESTAMP"))
-#     updated_at = Column(TIMESTAMP)
-#     user_id = Column(ForeignKey('user.user_id'), nullable=False, unique=True)
-#     course = relationship('Course', secondary='lecture_course')
-#
-#     user = relationship('User', backref=backref("user_lecture", uselist=False))
+
+
 #
 #     def __init__(self, **kwargs):
 #         self.update(**kwargs)
@@ -380,22 +358,6 @@ t_student_course = Table(
 #     category = relationship('ProblemCategory')
 #
 #
-# class Student(Base):
-#     __tablename__ = 'student'
-#
-#     student_id = Column(INTEGER(11), primary_key=True)
-#     code = Column(String(45, 'utf8mb4_unicode_ci'), nullable=False, unique=True)
-#     created_at = Column(TIMESTAMP, server_default=text("CURRENT_TIMESTAMP"))
-#     updated_at = Column(TIMESTAMP, server_default=text("CURRENT_TIMESTAMP"))
-#     user_id = Column(ForeignKey('user.user_id'), nullable=False, unique=True)
-#     solved = Column(INTEGER(11), nullable=False, server_default=text("'0'"))
-#     ratio = Column(Float(asdecimal=True), nullable=False, server_default=text("'0'"))
-#     dob = Column(Date)
-#     score = Column(INTEGER(11), server_default=text("'0'"))
-#     class_course = Column(String(45, 'utf8mb4_unicode_ci'))
-#
-#     user = relationship('User', backref=backref("user_student"))
-#     courses = relationship('Course', secondary=t_student_course, lazy='dynamic')
 #
 #     def __init__(self, **kwargs):
 #         self.update(**kwargs)
@@ -427,11 +389,6 @@ t_student_course = Table(
 #     problem = relationship('Problem')
 #
 #
-# t_lecture_course = Table(
-#     'lecture_course', TableMeta,
-#     Column('lecture_id', ForeignKey('lecture.lecture_id'), primary_key=True, nullable=False),
-#     Column('course_id', ForeignKey('course.course_id'), primary_key=True, nullable=False, index=True)
-# )
 #
 #
 # class Testcase(Base):
@@ -483,8 +440,17 @@ t_student_course = Table(
 #     submission = relationship('Submission')
 #     testcase = relationship('Testcase')
 
-# marshmallow for each entity for JSON deserialize
+# relationship rule
+User.admin = relationship('Admin',
+                          order_by=Admin.user_id,
+                          back_populates='user',
+                          cascade='all, delete, delete-orphan')
+
+
+# marshmallow schema for each entity for JSON deserialize
 class UserSchema(ModelSchema):
+    role = Nested(RoleSchema)
+
     class Meta:
         model = User
 
