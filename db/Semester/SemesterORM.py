@@ -6,6 +6,7 @@ from sqlalchemy.orm import relationship, backref
 from sqlalchemy.dialects.mysql import *
 from sqlalchemy_filters import apply_pagination
 
+
 class Semester(Base):
     __tablename__ = 'semester'
 

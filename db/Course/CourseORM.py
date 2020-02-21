@@ -5,9 +5,9 @@ from sqlalchemy import *
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.dialects.mysql import *
 from sqlalchemy_filters import apply_pagination
-from db.Lecture import Lecture
-from db.Semester import Semester
-from db.Admin import t_student_course
+from db.Lecture.LectureORM import Lecture
+from db.Semester.SemesterORM import Semester
+from db.Admin.AdminORM import t_student_course
 
 
 class Course(Base):

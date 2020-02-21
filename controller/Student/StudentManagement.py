@@ -5,7 +5,7 @@ from flask import (
     request,
     jsonify
 )
-from db.User import User
+from db.User.UserORM import User
 import re
 
 student = Blueprint('StudentManagement', __name__, url_prefix='/student')

@@ -5,8 +5,9 @@ from sqlalchemy import *
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.dialects.mysql import *
 from sqlalchemy_filters import apply_pagination
-from db.Admin import t_student_course
-from db.Course import Course
+from db.Admin.AdminORM import t_student_course
+from db.Submission.SubmissionORM import Submission
+from db.Course.CourseORM import Course
 
 
 class Student(Base):
@@ -23,6 +24,11 @@ class Student(Base):
     score = Column(INTEGER(11), server_default=text("'0'"))
     class_course = Column(String(45, 'utf8mb4_unicode_ci'))
 
-    user = relationship('User', backref=backref("user_student"))
+    user = relationship('User', back_populates='student')
     courses = relationship('Course', secondary=t_student_course, lazy='dynamic')
 
+
+Student.submission = relationship('Submission',
+                                  order_by=Submission.student_id,
+                                  back_populates='student',
+                                  cascade='all, delete, delete-orphan')

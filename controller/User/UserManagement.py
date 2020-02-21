@@ -6,8 +6,8 @@ from flask import (
     request,
     jsonify
 )
-from db.User import User
-from db.Role import Role
+from db.User.UserORM import User
+from db.Role.RoleORM import Role
 from datetime import datetime
 
 user = Blueprint('UserManagement', __name__, url_prefix='/user')
@@ -20,7 +20,6 @@ def get_records():
         per_page = request.args.get('per_page')
         sort_field = request.args.get('sort_field')
         sort_order = request.args.get('sort_order')
-        print(request.args)
         record = User.getRecord(page_index, per_page, sort_field, sort_order)
 
         return jsonify({
@@ -80,15 +79,12 @@ def update_record():
 
 @user.route('/delete-record', methods=['DELETE'])
 def delete():
-    try:
         delUser = request.get_json()
         user_id = delUser.get('delUserID')
         role_id = delUser.get('delRoleID')
         User.deleteRecord(user_id, role_id)
 
         return jsonify({'status': 'success'}), 200
-    except:
-        return jsonify({'status': 'bad-request'}), 400
 
 
 @user.route('/user_role', methods=['GET'])

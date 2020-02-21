@@ -6,10 +6,10 @@ from sqlalchemy import *
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.dialects.mysql import *
 from sqlalchemy_filters import apply_pagination
-from db.Role import RoleSchema, t_user_role
-from db.Admin import Admin
-from db.Student import Student
-from db.Lecture import Lecture
+from db.Role.RoleORM import RoleSchema, t_user_role
+from db.Admin.AdminORM import Admin
+from db.Student.StudentORM import Student
+from db.Lecture.LectureORM import Lecture
 
 
 # class Api(Base):
@@ -51,19 +51,9 @@ from db.Lecture import Lecture
 #     success = Column(TINYINT(1), nullable=False, index=True)
 #
 #
-# class JudgeResult(Base):
-#     __tablename__ = 'judge_result'
-#
-#     judge_result_id = Column(INTEGER(11), primary_key=True)
-#     judge_result_slug = Column(String(8))
-#     judge_result_name = Column(String(32))
+
 #
 #
-# class ProblemCategory(Base):
-#     __tablename__ = 'problem_category'
-#
-#     category_id = Column(INTEGER(11), primary_key=True)
-#     name = Column(String(255), nullable=False)
 #
 #
 #
@@ -137,7 +127,8 @@ class User(Base):
             sess.close()
 
     @classmethod
-    def updateRecord(cls, user_id, update_username, update_name, update_email, updated_at, update_actived, update_is_lock, update_permission):
+    def updateRecord(cls, user_id, update_username, update_name, update_email, updated_at, update_actived,
+                     update_is_lock, update_permission):
         sess = Session()
         try:
             # A dictionary of key - values with key being the attribute to be updated, and value being the new
@@ -156,18 +147,21 @@ class User(Base):
 
                 if update_permission == 'Sinh viên':
                     role_id = 1
-                    update_student_role = t_user_role.update().where(t_user_role.c.user_id == user_id).values({'role_id': role_id})
+                    update_student_role = t_user_role.update().where(t_user_role.c.user_id == user_id).values(
+                        {'role_id': role_id})
                     sess.execute(update_student_role)
 
                 elif update_permission == 'Giảng viên':
                     role_id = 2
-                    update_lecture_role = t_user_role.update().where(t_user_role.c.user_id == user_id).values({'role_id': role_id})
+                    update_lecture_role = t_user_role.update().where(t_user_role.c.user_id == user_id).values(
+                        {'role_id': role_id})
 
                     sess.execute(update_lecture_role)
 
                 else:
                     role_id = 3
-                    new_admin_role = t_user_role.update().where(t_user_role.c.user_id == user_id).values({'role_id': role_id})
+                    new_admin_role = t_user_role.update().where(t_user_role.c.user_id == user_id).values(
+                        {'role_id': role_id})
                     sess.execute(new_admin_role)
 
                 sess.commit()
@@ -227,24 +221,25 @@ class User(Base):
         try:
             delete_user_role = t_user_role.delete().where(t_user_role.c.user_id == user_id)
             sess.execute(delete_user_role)
-
-            if role_id == 1:
-                student = sess.query(Student).filter(Student.user_id == user_id).one()
-                sess.delete(student)
-                user = sess.query(User).filter(cls.user_id == user_id).one()
-                sess.delete(user)
-
-            elif role_id == 2:
-                lecture = sess.query(Lecture).filter(Lecture.user_id == user_id).one()
-                sess.delete(lecture)
-                user = sess.query(User).filter(cls.user_id == user_id).one()
-                sess.delete(user)
-
-            else:
-                admin = sess.query(Admin).filter(cls.user_id == user_id).one()
-                sess.delete(admin)
-                user = sess.query(User).filter(cls.user_id == user_id).one()
-                sess.delete(user)
+            user = sess.query(User).filter(cls.user_id == user_id).one()
+            sess.delete(user)
+            # if role_id == 1:
+            #     student = sess.query(Student).filter(Student.user_id == user_id).one()
+            #     sess.delete(student)
+            #     user = sess.query(User).filter(cls.user_id == user_id).one()
+            #     sess.delete(user)
+            #
+            # elif role_id == 2:
+            #     lecture = sess.query(Lecture).filter(Lecture.user_id == user_id).one()
+            #     sess.delete(lecture)
+            #     user = sess.query(User).filter(cls.user_id == user_id).one()
+            #     sess.delete(user)
+            #
+            # else:
+            #     admin = sess.query(Admin).filter(cls.user_id == user_id).one()
+            #     sess.delete(admin)
+            #     user = sess.query(User).filter(cls.user_id == user_id).one()
+            #     sess.delete(user)
 
             sess.commit()
         except:
@@ -328,34 +323,6 @@ class User(Base):
 #                 setattr(self, property, value)
 #
 #
-# class Problem(Base):
-#     __tablename__ = 'problem'
-#
-#     problem_id = Column(INTEGER(11), primary_key=True)
-#     created_at = Column(TIMESTAMP, server_default=text("CURRENT_TIMESTAMP"))
-#     updated_at = Column(TIMESTAMP, server_default=text("CURRENT_TIMESTAMP"))
-#     title = Column(String(255, 'utf8mb4_unicode_ci'), nullable=False)
-#     problem_statement = Column(MEDIUMTEXT, nullable=False)
-#     input_format = Column(MEDIUMTEXT)
-#     constraints = Column(MEDIUMTEXT)
-#     output_format = Column(MEDIUMTEXT)
-#     level = Column(TINYINT(4), nullable=False, server_default=text("'1'"))
-#     point = Column(INTEGER(11), nullable=False, server_default=text("'100'"))
-#     junit_rate = Column(INTEGER(11), nullable=False, server_default=text("'0.4'"))
-#     mark_io = Column(INTEGER(11), nullable=False, server_default=text("'0'"))
-#     mark_junit = Column(INTEGER(11), nullable=False, server_default=text("'0'"))
-#     mark_parser = Column(INTEGER(11), nullable=False, server_default=text("'0'"))
-#     parser_rate = Column(INTEGER(11), nullable=False, server_default=text("'0.6'"))
-#     submit_type = Column(String(255, 'utf8mb4_unicode_ci'), nullable=False, server_default=text("'CODE'"))
-#     sample_code = Column(MEDIUMTEXT)
-#     category_id = Column(ForeignKey('problem_category.category_id'), nullable=False, index=True)
-#     # memory_limit = Column(INTEGER(11))
-#     # used_limit = Column(INTEGER(11))
-#     # sample_input = Column(Text(collation='utf8mb4_unicode_ci'))
-#     # sample_output = Column(Text(collation='utf8mb4_unicode_ci'))
-#     # explanation = Column(Text(collation='utf8mb4_unicode_ci'))
-#
-#     category = relationship('ProblemCategory')
 #
 #
 #
@@ -374,77 +341,29 @@ class User(Base):
 #                 setattr(self, property, value)
 #
 #
-# class CourseProblem(Base):
-#     __tablename__ = 'course_problem'
-#     __table_args__ = (
-#         Index('unique_index', 'course_id', 'problem_id', unique=True),
-#     )
-#
-#     course_problem_id = Column(INTEGER(11), primary_key=True)
-#     course_id = Column(ForeignKey('course.course_id'), nullable=False, index=True)
-#     problem_id = Column(ForeignKey('problem.problem_id', ondelete='CASCADE'), nullable=False, index=True)
-#     deadline = Column(TIMESTAMP, nullable=False)
-#
-#     course = relationship('Course')
-#     problem = relationship('Problem')
 #
 #
 #
 #
-# class Testcase(Base):
-#     __tablename__ = 'testcase'
-#
-#     testcase_id = Column(INTEGER(11), primary_key=True)
-#     name = Column(String(255), nullable=False)
-#     input_file = Column(String(255))
-#     output_file = Column(String(255))
-#     unit_test_file = Column(String(255))
-#     problem_id = Column(ForeignKey('problem.problem_id'), nullable=False, index=True)
-#     score = Column(INTEGER(11), server_default=text("'1'"))
-#
-#     problem = relationship('Problem')
 #
 #
-# class Submission(Base):
-#     __tablename__ = 'submission'
-#
-#     submission_id = Column(INTEGER(11), primary_key=True)
-#     student_id = Column(ForeignKey('student.student_id'), nullable=False, index=True)
-#     course_problem_id = Column(ForeignKey('course_problem.course_problem_id'), nullable=False, index=True)
-#     sourcecode_file = Column(String(255), nullable=False)
-#     compilation_log = Column(Text)
-#     created_at = Column(TIMESTAMP, server_default=text("CURRENT_TIMESTAMP"))
-#     updated_at = Column(TIMESTAMP, server_default=text("CURRENT_TIMESTAMP"))
-#     total_score = Column(INTEGER(11), server_default=text("'0'"))
-#     total_time = Column(INTEGER(11), server_default=text("'0'"))
-#     max_memory = Column(INTEGER(11), server_default=text("'0'"))
-#     runtime_result_id = Column(ForeignKey('judge_result.judge_result_id'), index=True, server_default=text("'1'"))
-#
-#     course_problem = relationship('CourseProblem')
-#     runtime_result = relationship('JudgeResult')
-#     student = relationship('Student')
 #
 #
-# class SubmissionDetail(Base):
-#     __tablename__ = 'submission_detail'
-#
-#     detail_id = Column(INTEGER(11), primary_key=True)
-#     testcase_id = Column(ForeignKey('testcase.testcase_id'), nullable=False, index=True)
-#     submission_id = Column(ForeignKey('submission.submission_id'), nullable=False, index=True)
-#     used_memory = Column(INTEGER(11))
-#     used_time = Column(INTEGER(11))
-#     test_score = Column(INTEGER(11))
-#     state = Column(ForeignKey('judge_result.judge_result_id'), nullable=False, index=True)
-#
-#     judge_result = relationship('JudgeResult')
-#     submission = relationship('Submission')
-#     testcase = relationship('Testcase')
-
 # relationship rule
 User.admin = relationship('Admin',
                           order_by=Admin.user_id,
                           back_populates='user',
                           cascade='all, delete, delete-orphan')
+
+User.lecture = relationship('Lecture',
+                            order_by=Lecture.user_id,
+                            back_populates='user',
+                            cascade='all, delete, delete-orphan')
+
+User.student = relationship('Student',
+                            order_by=Student.user_id,
+                            back_populates='user',
+                            cascade='all, delete, delete-orphan')
 
 
 # marshmallow schema for each entity for JSON deserialize

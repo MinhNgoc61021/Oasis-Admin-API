@@ -27,6 +27,7 @@ class Role(Base):
         finally:
             sess.close()
 
+
 t_user_role = Table(
     'user_role', TableMeta,
     Column('user_id', ForeignKey('user.user_id'), nullable=False, index=True),
@@ -39,4 +40,5 @@ class RoleSchema(ModelSchema):
     class Meta:
         model = Role
 
-role_schema = RoleSchema
+
+role_schema = RoleSchema()
