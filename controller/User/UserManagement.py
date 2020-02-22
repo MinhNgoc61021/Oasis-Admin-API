@@ -34,6 +34,21 @@ def get_records():
         return jsonify({'status': 'bad-request'}), 400
 
 
+@user.route('/search', methods=['GET'])
+def search_record():
+    try:
+        searchUsername = request.args.get('searchUsername')
+        print('BEBE')
+        searchRecord = User.searchUserRecord(str(searchUsername))
+
+        return jsonify({
+            'status': 'success',
+            'search_results': searchRecord,
+        }), 200
+    except:
+        return jsonify({'status': 'bad-request'}), 400
+
+
 @user.route('/create-record', methods=['POST'])
 def create():
     try:
@@ -79,12 +94,12 @@ def update_record():
 
 @user.route('/delete-record', methods=['DELETE'])
 def delete():
-        delUser = request.get_json()
-        user_id = delUser.get('delUserID')
-        role_id = delUser.get('delRoleID')
-        User.deleteRecord(user_id, role_id)
+    delUser = request.get_json()
+    user_id = delUser.get('delUserID')
+    role_id = delUser.get('delRoleID')
+    User.deleteRecord(user_id, role_id)
 
-        return jsonify({'status': 'success'}), 200
+    return jsonify({'status': 'success'}), 200
 
 
 @user.route('/user_role', methods=['GET'])

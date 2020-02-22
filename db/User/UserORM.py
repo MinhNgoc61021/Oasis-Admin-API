@@ -11,7 +11,6 @@ from db.Admin.AdminORM import Admin
 from db.Student.StudentORM import Student
 from db.Lecture.LectureORM import Lecture
 
-
 # class Api(Base):
 #     __tablename__ = 'api'
 #
@@ -90,6 +89,7 @@ from db.Lecture.LectureORM import Lecture
 #     field = Column(LONGTEXT)
 #
 #
+from db.UserFacebook.UserFacebookORM import UserFacebook
 
 
 class User(Base):
@@ -120,6 +120,18 @@ class User(Base):
                                                             page_size=int(per_page))
             # many=True if user_query is a collection of many results, so that record will be serialized to a list.
             return user_schema.dump(query, many=True), get_record_pagination
+        except:
+            sess.rollback()
+            raise
+        finally:
+            sess.close()
+
+    @classmethod
+    def searchUserRecord(cls, username):
+        sess = Session()
+        try:
+            user = sess.query(User).filter(User.username.like('%' + username + '%'))
+            return user_schema.dump(user, many=True)
         except:
             sess.rollback()
             raise
@@ -223,24 +235,6 @@ class User(Base):
             sess.execute(delete_user_role)
             user = sess.query(User).filter(cls.user_id == user_id).one()
             sess.delete(user)
-            # if role_id == 1:
-            #     student = sess.query(Student).filter(Student.user_id == user_id).one()
-            #     sess.delete(student)
-            #     user = sess.query(User).filter(cls.user_id == user_id).one()
-            #     sess.delete(user)
-            #
-            # elif role_id == 2:
-            #     lecture = sess.query(Lecture).filter(Lecture.user_id == user_id).one()
-            #     sess.delete(lecture)
-            #     user = sess.query(User).filter(cls.user_id == user_id).one()
-            #     sess.delete(user)
-            #
-            # else:
-            #     admin = sess.query(Admin).filter(cls.user_id == user_id).one()
-            #     sess.delete(admin)
-            #     user = sess.query(User).filter(cls.user_id == user_id).one()
-            #     sess.delete(user)
-
             sess.commit()
         except:
             sess.rollback()
@@ -249,11 +243,6 @@ class User(Base):
             sess.close()
 
 
-# class UserFacebook(User):
-#     __tablename__ = 'user_facebook'
-#
-#     user_id = Column(ForeignKey('user.user_id'), primary_key=True)
-#     facebook_id = Column(String(30))
 #
 #
 # class UsersPermissionsPermission(Base):
@@ -364,6 +353,11 @@ User.student = relationship('Student',
                             order_by=Student.user_id,
                             back_populates='user',
                             cascade='all, delete, delete-orphan')
+
+User.user_facebook = relationship('UserFacebook',
+                                  order_by=UserFacebook.user_id,
+                                  back_populates='user',
+                                  cascade='all, delete, delete-orphan')
 
 
 # marshmallow schema for each entity for JSON deserialize
