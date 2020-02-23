@@ -5,6 +5,7 @@ from sqlalchemy import *
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.dialects.mysql import *
 from sqlalchemy_filters import apply_pagination
+from db.User.UserORM import User
 
 
 class Admin(Base):
@@ -15,6 +16,11 @@ class Admin(Base):
 
     user = relationship('User', back_populates='admin')
 
+
+User.admin = relationship('Admin',
+                          order_by=Admin.user_id,
+                          back_populates='user',
+                          cascade='all, delete, delete-orphan')
 
 t_api_role = Table(
     'api_role', TableMeta,

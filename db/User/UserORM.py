@@ -7,9 +7,6 @@ from sqlalchemy.orm import relationship, backref
 from sqlalchemy.dialects.mysql import *
 from sqlalchemy_filters import apply_pagination
 from db.Role.RoleORM import RoleSchema, t_user_role
-from db.Admin.AdminORM import Admin
-from db.Student.StudentORM import Student
-from db.Lecture.LectureORM import Lecture
 
 # class Api(Base):
 #     __tablename__ = 'api'
@@ -338,21 +335,7 @@ class User(Base):
 #
 #
 #
-# relationship rule
-User.admin = relationship('Admin',
-                          order_by=Admin.user_id,
-                          back_populates='user',
-                          cascade='all, delete, delete-orphan')
 
-User.lecture = relationship('Lecture',
-                            order_by=Lecture.user_id,
-                            back_populates='user',
-                            cascade='all, delete, delete-orphan')
-
-User.student = relationship('Student',
-                            order_by=Student.user_id,
-                            back_populates='user',
-                            cascade='all, delete, delete-orphan')
 
 User.user_facebook = relationship('UserFacebook',
                                   order_by=UserFacebook.user_id,

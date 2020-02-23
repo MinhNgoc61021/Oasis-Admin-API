@@ -5,7 +5,7 @@ from sqlalchemy import *
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.dialects.mysql import *
 from sqlalchemy_filters import apply_pagination
-
+from db.User.UserORM import User
 
 class Lecture(Base):
     __tablename__ = 'lecture'
@@ -17,3 +17,9 @@ class Lecture(Base):
     course = relationship('Course', secondary='lecture_course')
 
     user = relationship('User', backref=backref("user_lecture", uselist=False))
+
+
+User.lecture = relationship('Lecture',
+                            order_by=Lecture.user_id,
+                            back_populates='user',
+                            cascade='all, delete, delete-orphan')
