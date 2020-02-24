@@ -38,7 +38,6 @@ def get_records():
 def search_record():
     try:
         searchUsername = request.args.get('searchUsername')
-        print('BEBE')
         searchRecord = User.searchUserRecord(str(searchUsername))
 
         return jsonify({

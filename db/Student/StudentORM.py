@@ -32,14 +32,44 @@ class Student(Base):
     def getRecord(cls, page_index, per_page, sort_field, sort_order):
         sess = Session()
         try:
-            query = sess.query(Student).options(joinedload('user')).order_by(getattr(
-                getattr(Student, sort_field), sort_order)())
+            if sort_field.find('user.') != -1:
+                sort_field = sort_field.split('user.')[1]
+                query = sess.query(Student).join(User).order_by(getattr(
+                    getattr(User, sort_field), sort_order)())
+            else:
+                query = sess.query(Student).order_by(getattr(
+                    getattr(Student, sort_field), sort_order)())
+                # user_query is the user object and get_record_pagination is the index data
 
-            # user_query is the user object and get_record_pagination is the index data
             query, get_record_pagination = apply_pagination(query, page_number=int(page_index),
                                                             page_size=int(per_page))
             # many=True if user_query is a collection of many results, so that record will be serialized to a list.
             return student_schema.dump(query, many=True), get_record_pagination
+        except:
+            sess.rollback()
+            raise
+        finally:
+            sess.close()
+
+    @classmethod
+    def searchUserRecord(cls, code):
+        sess = Session()
+        try:
+            user = sess.query(Student).filter(cls.code.like('%' + code + '%')).order_by(cls.code.asc())
+            return student_schema.dump(user, many=True)
+        except:
+            sess.rollback()
+            raise
+        finally:
+            sess.close()
+
+    @classmethod
+    def deleteRecord(cls, code):
+        sess = Session()
+        try:
+            student = sess.query(Student).filter(cls.code == code).one()
+            sess.delete(student)
+            sess.commit()
         except:
             sess.rollback()
             raise

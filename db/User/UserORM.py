@@ -127,7 +127,7 @@ class User(Base):
     def searchUserRecord(cls, username):
         sess = Session()
         try:
-            user = sess.query(User).filter(User.username.like('%' + username + '%'))
+            user = sess.query(User).filter(cls.username.like('%' + username + '%')).order_by(cls.username.asc())
             return user_schema.dump(user, many=True)
         except:
             sess.rollback()
