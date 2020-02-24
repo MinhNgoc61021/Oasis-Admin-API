@@ -52,11 +52,44 @@ class Student(Base):
             sess.close()
 
     @classmethod
-    def searchUserRecord(cls, code):
+    def searchStudentRecord(cls, code):
         sess = Session()
         try:
             user = sess.query(Student).filter(cls.code.like('%' + code + '%')).order_by(cls.code.asc())
             return student_schema.dump(user, many=True)
+        except:
+            sess.rollback()
+            raise
+        finally:
+            sess.close()
+
+    @classmethod
+    def updateRecord(cls, user_id, update_code, update_username, update_name, update_email, update_dob, update_class_course, updated_at, update_actived,
+                     update_is_lock):
+        sess = Session()
+        try:
+            # A dictionary of key - values with key being the attribute to be updated, and value being the new
+            # contents of attribute
+            if sess.query(User).filter(
+                    or_(User.username == update_username, User.email == update_email),
+                    User.user_id != user_id).scalar() is None or sess.query(Student).filter(Student.code != update_code).scalar() is None:
+
+                sess.query(User).filter(User.user_id == user_id).update(
+                    {User.username: update_username,
+                     User.email: update_email,
+                     User.name: update_name,
+                     User.updated_at: updated_at,
+                     User.actived: update_actived,
+                     User.is_lock: update_is_lock})
+
+                sess.query(Student).filter(Student.user_id == user_id).update(
+                    {Student.code: update_code,
+                     Student.dob: update_dob,
+                     Student.class_course: update_class_course})
+                sess.commit()
+                return True
+            else:
+                return False
         except:
             sess.rollback()
             raise
@@ -89,7 +122,7 @@ User.student = relationship('Student',
 
 
 class StudentSchema(ModelSchema):
-    user = Nested(UserSchema, only=('username', 'name', 'email', 'created_at', 'updated_at', 'actived', 'is_lock'))
+    user = Nested(UserSchema, only=('user_id', 'username', 'name', 'email', 'created_at', 'updated_at', 'actived', 'is_lock'))
 
     class Meta:
         model = Student
