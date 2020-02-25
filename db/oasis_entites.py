@@ -776,7 +776,6 @@ course_schema = CourseSchema(
     only=['course_id', 'code', 'name', 'description'])
 
 
-
 # marshmallow schema for each entity for JSON deserialize
 class RoleSchema(ModelSchema):
     class Meta:
