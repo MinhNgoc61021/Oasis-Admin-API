@@ -28,21 +28,6 @@ Session.configure(bind=engine)
 
 
 def init_db():
-    import db.Student.StudentORM
-    import db.User.UserORM
-    import db.Role.RoleORM
-    import db.Lecture.LectureORM
-    import db.Admin.AdminORM
-    import db.Course.CourseORM
-    import db.Semester.SemesterORM
-    import db.CourseProblem.CourseProblemORM
-    import db.Problem.ProblemORM
-    import db.JudgeResult.JudgeResultORM
-    import db.Submission.SubmissionORM
-    import db.ProblemCategory.ProblemCategoryORM
-    import db.SubmissionDetail.SubmissionDetailORM
-    import db.Testcase.TestcaseORM
-    import db.ZipSubmissionResult.ZipSubmissionResultORM
-    import db.UserFacebook.UserFacebookORM
+    from db.oasis_entites import User, Problem, ProblemCategory, Admin, Student, Role, Lecture, CourseProblem, Submission, SubmissionDetail, ZipSubmissionResult, UserFacebook, Testcase
 
     Base.metadata.create_all(bind=engine)

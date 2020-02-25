@@ -7,11 +7,34 @@ from flask import (
     jsonify
 )
 
-from db.Student.StudentORM import Student
+from db.oasis_entites import Student
+from db.oasis_entites import User
 from datetime import datetime
 import re
 
 student = Blueprint('StudentManagement', __name__, url_prefix='/student')
+
+
+@student.route('/create-record', methods=['POST'])
+def create():
+        new_student= request.get_json()
+        code = new_student.get('new_code')
+        username = new_student.get('new_username')
+        name = new_student.get('new_name')
+        email = new_student.get('new_email')
+        dob = new_student.get('new_dob')
+        class_cource = new_student.get('new_class_cource')
+        course = new_student.get('new_course')
+        permission = 'Sinh viên'
+        create_at = datetime.now(pytz.timezone('Asia/Ho_Chi_Minh')).strftime("%Y-%m-%d %H:%M:%S")
+        actived = new_student.get('new_actived')
+        is_lock = new_student.get('new_is_lock')
+
+        isStudentCreated = User.createRecord(username, name, email, create_at, permission, actived, is_lock, code, dob, class_cource, course, 'StudentForm')
+        if isStudentCreated is True:
+            return jsonify({'status': 'success'}), 200
+        else:
+            return jsonify({'status': 'already-exist'}), 202
 
 
 @student.route('/records', methods=['GET'])

@@ -6,8 +6,8 @@ from flask import (
     request,
     jsonify
 )
-from db.User.UserORM import User
-from db.Role.RoleORM import Role
+from db.oasis_entites import User
+from db.oasis_entites import Role
 from datetime import datetime
 
 user = Blueprint('UserManagement', __name__, url_prefix='/user')
@@ -60,7 +60,7 @@ def create():
         actived = new_user.get('new_actived')
         is_lock = new_user.get('new_is_lock')
 
-        isCreated = User.createRecord(username, name, email, create_at, permission, actived, is_lock)
+        isCreated = User.createRecord(username, name, email, create_at, permission, actived, is_lock, '', '', '', '', 'UserForm')
         if isCreated is True:
             return jsonify({'status': 'success'}), 200
         else:
