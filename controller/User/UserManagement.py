@@ -60,7 +60,8 @@ def create():
         actived = new_user.get('new_actived')
         is_lock = new_user.get('new_is_lock')
 
-        isCreated = User.createRecord(username, name, email, create_at, permission, actived, is_lock, '', '', '', '', 'UserForm')
+        isCreated = User.createRecord(username, name, email, create_at, permission, actived, is_lock, '', '', '', '',
+                                      'UserForm')
         if isCreated is True:
             return jsonify({'status': 'success'}), 200
         else:
@@ -93,15 +94,18 @@ def update_record():
 
 @user.route('/delete-record', methods=['DELETE'])
 def delete():
-    delUser = request.get_json()
-    user_id = delUser.get('delUserID')
-    role_id = delUser.get('delRoleID')
-    User.deleteRecord(user_id, role_id)
+    try:
+        delUser = request.get_json()
+        user_id = delUser.get('delUserID')
+        role_id = delUser.get('delRoleID')
+        User.deleteRecord(user_id, role_id)
 
-    return jsonify({'status': 'success'}), 200
+        return jsonify({'status': 'success'}), 200
+    except:
+        return jsonify({'status': 'bad-request'}), 400
 
 
-@user.route('/user_role', methods=['GET'])
+@user.route('/user-role', methods=['GET'])
 def getRole():
     try:
         user_id = request.args.get('user_id')

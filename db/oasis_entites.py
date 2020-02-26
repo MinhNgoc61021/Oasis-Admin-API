@@ -186,7 +186,9 @@ class User(Base):
                      course_id, form_type):
         sess = Session()
         try:
-            if sess.query(User).filter(or_(cls.username == username, cls.email == email)).scalar() is None:
+            if sess.query(User).filter(
+                    or_(cls.username == username, cls.email == email)).count() < 1 and sess.query(Student).filter(
+                Student.code == code).scalar() is None:
                 new_user = User(username=username,
                                 name=name,
                                 email=email,
@@ -273,41 +275,6 @@ t_student_course = Table(
 )
 
 
-class Course(Base):
-    __tablename__ = 'course'
-
-    course_id = Column(INTEGER(11), primary_key=True)
-    code = Column(String(45), nullable=False)
-    created_at = Column(TIMESTAMP, server_default=text("CURRENT_TIMESTAMP"))
-    updated_at = Column(TIMESTAMP, server_default=text("CURRENT_TIMESTAMP"))
-    name = Column(String(255), nullable=False)
-    description = Column(String(255))
-    semester_id = Column(ForeignKey('semester.semester_id'), nullable=False, index=True)
-
-    semester = relationship('Semester')
-    lectures = relationship('Lecture', secondary='lecture_course')
-    students = relationship('Student', secondary=t_student_course)
-
-    @classmethod
-    def searchCourseRecord(cls, code):
-        sess = Session()
-        try:
-            course = sess.query(Course).filter(cls.code.like('%' + code + '%')).order_by(cls.code.asc())
-            return course_schema.dump(course, many=True)
-        except:
-            sess.rollback()
-            raise
-        finally:
-            sess.close()
-
-
-t_lecture_course = Table(
-    'lecture_course', TableMeta,
-    Column('lecture_id', ForeignKey('lecture.lecture_id'), primary_key=True, nullable=False),
-    Column('course_id', ForeignKey('course.course_id'), primary_key=True, nullable=False, index=True)
-)
-
-
 class Student(Base):
     __tablename__ = 'student'
 
@@ -361,8 +328,8 @@ class Student(Base):
             sess.close()
 
     @classmethod
-    def updateRecord(cls, user_id, update_code, update_username, update_name, update_email, update_dob,
-                     update_class_course, updated_at, update_actived,
+    def updateRecord(cls, user_id, student_id, update_code, update_username, update_name, update_email, update_dob,
+                     update_class_course, update_course_id, updated_at, update_actived,
                      update_is_lock):
         sess = Session()
         try:
@@ -370,8 +337,8 @@ class Student(Base):
             # contents of attribute
             if sess.query(User).filter(
                     or_(User.username == update_username, User.email == update_email),
-                    User.user_id != user_id).scalar() is None or sess.query(Student).filter(
-                Student.code != update_code).scalar() is None:
+                    User.user_id != user_id).scalar() is None and sess.query(Student).filter(
+                Student.code == update_code, Student.user_id != user_id).scalar() is None:
 
                 sess.query(User).filter(User.user_id == user_id).update(
                     {User.username: update_username,
@@ -386,6 +353,21 @@ class Student(Base):
                      Student.updated_at: updated_at,
                      Student.dob: update_dob,
                      Student.class_course: update_class_course})
+
+                stmt = select([t_student_course]).where(t_student_course.c.student_id == student_id)
+                course = sess.execute(stmt).first()
+
+                if course is None:
+                    new_student_course = t_student_course.insert().values(
+                        {'student_id': student_id,
+                         'course_id': update_course_id})
+                    sess.execute(new_student_course)
+                else:
+                    update_student_course = t_student_course.update().where(
+                        t_student_course.c.student_id == student_id).values(
+                        {'course_id': update_course_id})
+                    sess.execute(update_student_course)
+
                 sess.commit()
                 return True
             else:
@@ -408,6 +390,58 @@ class Student(Base):
             raise
         finally:
             sess.close()
+
+
+class Course(Base):
+    __tablename__ = 'course'
+
+    course_id = Column(INTEGER(11), primary_key=True)
+    code = Column(String(45), nullable=False)
+    created_at = Column(TIMESTAMP, server_default=text("CURRENT_TIMESTAMP"))
+    updated_at = Column(TIMESTAMP, server_default=text("CURRENT_TIMESTAMP"))
+    name = Column(String(255), nullable=False)
+    description = Column(String(255))
+    semester_id = Column(ForeignKey('semester.semester_id'), nullable=False, index=True)
+
+    semester = relationship('Semester')
+    lectures = relationship('Lecture', secondary='lecture_course')
+    students = relationship('Student', secondary=t_student_course)
+
+    @classmethod
+    def searchCourseRecord(cls, code):
+        sess = Session()
+        try:
+            course = sess.query(Course).filter(cls.code.like('%' + code + '%')).order_by(cls.code.asc())
+            return course_schema.dump(course, many=True)
+        except:
+            sess.rollback()
+            raise
+        finally:
+            sess.close()
+
+    @classmethod
+    def getStudentCourse(cls, student_id):
+        sess = Session()
+        try:
+            stmt = select([t_student_course]).where(t_student_course.c.student_id == student_id)
+            course_id = sess.execute(stmt).first()
+            if course_id is None:
+                return None
+            else:
+                course = sess.query(Course).filter(cls.course_id == int(course_id[1])).one()
+                return course_schema.dump(course)
+        except:
+            sess.rollback()
+            raise
+        finally:
+            sess.close()
+
+
+t_lecture_course = Table(
+    'lecture_course', TableMeta,
+    Column('lecture_id', ForeignKey('lecture.lecture_id'), primary_key=True, nullable=False),
+    Column('course_id', ForeignKey('course.course_id'), primary_key=True, nullable=False, index=True)
+)
 
 
 class Submission(Base):
@@ -486,6 +520,24 @@ class Lecture(Base):
     course = relationship('Course', secondary='lecture_course')
 
     user = relationship('User', backref=backref("user_lecture", uselist=False))
+
+    @classmethod
+    def getRecord(cls, page_index, per_page, sort_field, sort_order):
+        sess = Session()
+        try:
+            query = sess.query(User).join(Lecture).order_by(getattr(
+                getattr(User, sort_field), sort_order)())
+
+            # user_query is the user object and get_record_pagination is the index data
+            query, get_record_pagination = apply_pagination(query, page_number=int(page_index),
+                                                            page_size=int(per_page))
+            # many=True if user_query is a collection of many results, so that record will be serialized to a list.
+            return user_schema.dump(query, many=True), get_record_pagination
+        except:
+            sess.rollback()
+            raise
+        finally:
+            sess.close()
 
 
 class Problem(Base):

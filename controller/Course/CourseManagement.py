@@ -26,3 +26,9 @@ def search_record():
         }), 200
     except:
         return jsonify({'status': 'bad-request'}), 400
+
+
+@course.route('/student-course', methods=['GET'])
+def get_student_course():
+        student_id = request.args.get('student_id')
+        return jsonify({'status': 'success', 'course': Course.getStudentCourse(student_id)}), 200

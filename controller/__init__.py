@@ -3,6 +3,7 @@ from flask_cors import CORS
 from controller.User.UserManagement import user
 from controller.Course.CourseManagement import course
 from controller.Student.StudentManagement import student
+from controller.Lecturer.LecturerManagement import lecturer
 from db import init_db
 
 
@@ -13,4 +14,5 @@ def create_app():
     app.register_blueprint(user)
     app.register_blueprint(student)
     app.register_blueprint(course)
+    app.register_blueprint(lecturer)
     return app
