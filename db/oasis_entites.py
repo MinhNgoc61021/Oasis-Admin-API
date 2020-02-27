@@ -194,6 +194,7 @@ class User(Base):
                                 email=email,
                                 password=generate_password_hash(username).decode('utf-8'),
                                 created_at=create_at,
+                                profile_pic='avatar/default.png',
                                 actived=actived,
                                 is_lock=is_lock)
                 sess.add(new_user)
@@ -543,7 +544,8 @@ class Lecture(Base):
     def searchUserRecord(cls, username):
         sess = Session()
         try:
-            user = sess.query(User).join(Lecture).filter(User.username.like('%' + username + '%')).order_by(User.username.asc())
+            user = sess.query(User).join(Lecture).filter(User.username.like('%' + username + '%')).order_by(
+                User.username.asc())
             return user_schema.dump(user, many=True)
         except:
             sess.rollback()
@@ -668,6 +670,79 @@ class Semester(Base):
     name = Column(String(255), nullable=False)
     created_at = Column(TIMESTAMP, server_default=text("CURRENT_TIMESTAMP"))
     updated_at = Column(TIMESTAMP, server_default=text("CURRENT_TIMESTAMP"))
+
+    @classmethod
+    def createRecord(cls, name):
+        sess = Session()
+        try:
+            if sess.query(Semester).filter(cls.name == name).scalar() is None:
+                new_semester = Semester(name=name)
+                sess.add(new_semester)
+                sess.commit()
+
+                return True
+            else:
+                return False
+        except:
+            sess.rollback()
+            raise
+        finally:
+            sess.close()
+
+    @classmethod
+    def getRecord(cls, page_index, per_page, sort_field, sort_order):
+        sess = Session()
+        try:
+            query = sess.query(Semester).order_by(getattr(
+                getattr(Semester, sort_field), sort_order)())
+
+            # user_query is the user object and get_record_pagination is the index data
+            query, get_record_pagination = apply_pagination(query, page_number=int(page_index),
+                                                            page_size=int(per_page))
+            # many=True if user_query is a collection of many results, so that record will be serialized to a list.
+            return semester_schema.dump(query, many=True), get_record_pagination
+        except:
+            sess.rollback()
+            raise
+        finally:
+            sess.close()
+
+    @classmethod
+    def deleteRecord(cls, semester_id):
+        sess = Session()
+        try:
+            semester = sess.query(Semester).filter(cls.semester_id == semester_id).one()
+            sess.delete(semester)
+            sess.commit()
+        except:
+            sess.rollback()
+            raise
+        finally:
+            sess.close()
+
+    @classmethod
+    def updateRecord(cls, semester_id, update_name, update_at):
+        sess = Session()
+        try:
+            # A dictionary of key - values with key being the attribute to be updated, and value being the new
+            # contents of attribute
+            if sess.query(Semester).filter(
+                    or_(cls.name == update_name),
+                    cls.semester_id != semester_id).scalar() is None:
+
+                sess.query(Semester).filter(cls.semester_id == semester_id).update(
+                    {cls.name: update_name,
+                     cls.updated_at: update_at})
+
+                sess.commit()
+                return True
+            else:
+                return False
+        except:
+            sess.rollback()
+            raise
+        finally:
+            sess.close()
 
 
 class Testcase(Base):
@@ -904,6 +979,11 @@ class StudentSchema(ModelSchema):
         model = Student
 
 
+class SemesterSchema(ModelSchema):
+    class Meta:
+        model = Semester
+
+
 user_schema = UserSchema(
     only=['user_id', 'username', 'name', 'email', 'actived', 'is_lock'])
 
@@ -911,3 +991,5 @@ role_schema = RoleSchema()
 
 student_schema = StudentSchema(
     only=['student_id', 'code', 'dob', 'class_course', 'user'])
+
+semester_schema = SemesterSchema()
