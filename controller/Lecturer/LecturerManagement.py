@@ -35,6 +35,27 @@ def create():
         return jsonify({'status': 'bad-request'}), 400
 
 
+@lecturer.route('/update-record', methods=['PUT'])
+def update_record():
+    try:
+        new_update = request.get_json()
+        user_id = new_update.get('user_id')
+        username = new_update.get('update_username')
+        name = new_update.get('update_name')
+        email = new_update.get('update_email')
+        updated_at = datetime.now(pytz.timezone('Asia/Ho_Chi_Minh')).strftime("%Y-%m-%d %H:%M:%S")
+        actived = new_update.get('update_actived')
+        is_lock = new_update.get('update_is_lock')
+
+        isUpdated = Lecture.updateRecord(int(user_id), username, name, email, updated_at, actived, is_lock)
+        if isUpdated is True:
+            return jsonify({'status': 'success'}), 200
+        else:
+            return jsonify({'status': 'already-exist'}), 202
+    except:
+        return jsonify({'status': 'bad-request'}), 400
+
+
 @lecturer.route('/records', methods=['GET'])
 def get_records():
     try:
@@ -52,5 +73,31 @@ def get_records():
             'num_pages': record[1].num_pages,
             'total_results': record[1].total_results
         }), 200
+    except:
+        return jsonify({'status': 'bad-request'}), 400
+
+
+@lecturer.route('/search', methods=['GET'])
+def search_record():
+    try:
+        searchUsername = request.args.get('searchUsername')
+        searchRecord = Lecture.searchUserRecord(str(searchUsername))
+
+        return jsonify({
+            'status': 'success',
+            'search_results': searchRecord,
+        }), 200
+    except:
+        return jsonify({'status': 'bad-request'}), 400
+
+
+@lecturer.route('/delete-record', methods=['DELETE'])
+def delete():
+    try:
+        delStudent = request.get_json()
+        user_id = delStudent.get('delUserID')
+        Lecture.deleteRecord(user_id)
+
+        return jsonify({'status': 'success'}), 200
     except:
         return jsonify({'status': 'bad-request'}), 400

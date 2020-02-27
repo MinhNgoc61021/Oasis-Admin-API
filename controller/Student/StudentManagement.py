@@ -105,8 +105,8 @@ def update_record():
 def delete():
     try:
         delStudent = request.get_json()
-        code = delStudent.get('delStudentCode')
-        Student.deleteRecord(code)
+        user_id = delStudent.get('delUserID')
+        Student.deleteRecord(user_id)
 
         return jsonify({'status': 'success'}), 200
     except:

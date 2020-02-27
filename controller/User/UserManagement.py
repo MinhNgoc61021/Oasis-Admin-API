@@ -97,8 +97,7 @@ def delete():
     try:
         delUser = request.get_json()
         user_id = delUser.get('delUserID')
-        role_id = delUser.get('delRoleID')
-        User.deleteRecord(user_id, role_id)
+        User.deleteRecord(user_id)
 
         return jsonify({'status': 'success'}), 200
     except:

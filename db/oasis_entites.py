@@ -244,7 +244,7 @@ class User(Base):
             sess.close()
 
     @classmethod
-    def deleteRecord(cls, user_id, role_id):
+    def deleteRecord(cls, user_id):
         sess = Session()
         try:
             delete_user_role = t_user_role.delete().where(t_user_role.c.user_id == user_id)
@@ -379,10 +379,10 @@ class Student(Base):
             sess.close()
 
     @classmethod
-    def deleteRecord(cls, code):
+    def deleteRecord(cls, user_id):
         sess = Session()
         try:
-            student = sess.query(Student).filter(cls.code == code).one()
+            student = sess.query(Student).filter(cls.user_id == user_id).one()
             sess.delete(student)
             sess.commit()
         except:
@@ -533,6 +533,62 @@ class Lecture(Base):
                                                             page_size=int(per_page))
             # many=True if user_query is a collection of many results, so that record will be serialized to a list.
             return user_schema.dump(query, many=True), get_record_pagination
+        except:
+            sess.rollback()
+            raise
+        finally:
+            sess.close()
+
+    @classmethod
+    def searchUserRecord(cls, username):
+        sess = Session()
+        try:
+            user = sess.query(User).join(Lecture).filter(User.username.like('%' + username + '%')).order_by(User.username.asc())
+            return user_schema.dump(user, many=True)
+        except:
+            sess.rollback()
+            raise
+        finally:
+            sess.close()
+
+    @classmethod
+    def updateRecord(cls, user_id, update_username, update_name, update_email, updated_at, update_actived,
+                     update_is_lock):
+        sess = Session()
+        try:
+            # A dictionary of key - values with key being the attribute to be updated, and value being the new
+            # contents of attribute
+            if sess.query(User).filter(
+                    or_(User.username == update_username, User.email == update_email),
+                    User.user_id != user_id).scalar() is None:
+
+                sess.query(User).filter(User.user_id == user_id).update(
+                    {User.username: update_username,
+                     User.email: update_email,
+                     User.name: update_name,
+                     User.updated_at: updated_at,
+                     User.actived: update_actived,
+                     User.is_lock: update_is_lock})
+
+                sess.commit()
+                return True
+            else:
+                return False
+        except:
+            sess.rollback()
+            raise
+        finally:
+            sess.close()
+
+    @classmethod
+    def deleteRecord(cls, user_id):
+        sess = Session()
+        try:
+            delete_lecture_role = t_user_role.delete().where(t_user_role.c.user_id == user_id)
+            sess.execute(delete_lecture_role)
+            lecturer = sess.query(User).filter(User.user_id == user_id).one()
+            sess.delete(lecturer)
+            sess.commit()
         except:
             sess.rollback()
             raise
