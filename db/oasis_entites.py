@@ -357,7 +357,6 @@ class Student(Base):
 
                 stmt = select([t_student_course]).where(t_student_course.c.student_id == student_id)
                 course = sess.execute(stmt).first()
-
                 if course is None:
                     new_student_course = t_student_course.insert().values(
                         {'student_id': student_id,
@@ -404,9 +403,48 @@ class Course(Base):
     description = Column(String(255))
     semester_id = Column(ForeignKey('semester.semester_id'), nullable=False, index=True)
 
-    semester = relationship('Semester')
+    semester = relationship('Semester', back_populates='course')
     lectures = relationship('Lecture', secondary='lecture_course')
     students = relationship('Student', secondary=t_student_course)
+
+    @classmethod
+    def getRecord(cls, page_index, per_page, sort_field, sort_order):
+        sess = Session()
+        try:
+            query = sess.query(Course).order_by(getattr(
+                getattr(Course, sort_field), sort_order)())
+
+            # user_query is the user object and get_record_pagination is the index data
+            query, get_record_pagination = apply_pagination(query, page_number=int(page_index),
+                                                            page_size=int(per_page))
+            # many=True if user_query is a collection of many results, so that record will be serialized to a list.
+            return course_schema.dump(query, many=True), get_record_pagination
+        except:
+            sess.rollback()
+            raise
+        finally:
+            sess.close()
+
+    @classmethod
+    def createRecord(cls, code, name, description, semester_id):
+        sess = Session()
+        try:
+            if sess.query(Course).filter(or_(cls.code == code, cls.name == name)).scalar() is None:
+                new_course = Course(code=code,
+                                    name=name,
+                                    description=description,
+                                    semester_id=semester_id)
+                sess.add(new_course)
+                sess.commit()
+
+                return True
+            else:
+                return False
+        except:
+            sess.rollback()
+            raise
+        finally:
+            sess.close()
 
     @classmethod
     def searchCourseRecord(cls, code):
@@ -708,6 +746,18 @@ class Semester(Base):
             sess.close()
 
     @classmethod
+    def searchSemesterRecord(cls, name):
+        sess = Session()
+        try:
+            user = sess.query(Semester).filter(cls.name.like('%' + name + '%')).order_by(cls.name.asc())
+            return semester_schema.dump(user, many=True)
+        except:
+            sess.rollback()
+            raise
+        finally:
+            sess.close()
+
+    @classmethod
     def deleteRecord(cls, semester_id):
         sess = Session()
         try:
@@ -923,6 +973,7 @@ User.admin = relationship('Admin',
                           order_by=Admin.user_id,
                           back_populates='user',
                           cascade='all, delete, delete-orphan')
+
 JudgeResult.submission_detail = relationship('SubmissionDetail',
                                              order_by=SubmissionDetail.state,
                                              back_populates='judge_result',
@@ -947,6 +998,11 @@ Submission.zip_submission_result = relationship('ZipSubmissionResult',
                                                 order_by=ZipSubmissionResult.submission_id,
                                                 back_populates='submission',
                                                 cascade='all, delete, delete-orphan')
+
+Semester.course = relationship('Course',
+                               order_by=Course.semester_id,
+                               back_populates='semester',
+                               cascade='all, delete, delete-orphan')
 
 
 # marshmallow schema for each entity for JSON deserialize

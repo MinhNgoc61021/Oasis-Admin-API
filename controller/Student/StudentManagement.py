@@ -10,7 +10,6 @@ from flask import (
 from db.oasis_entites import Student
 from db.oasis_entites import User
 from datetime import datetime
-import re
 
 student = Blueprint('StudentManagement', __name__, url_prefix='/student')
 
@@ -32,8 +31,8 @@ def create():
         is_lock = new_student.get('new_is_lock')
 
         print(request.get_json())
-        isStudentCreated = User.createRecord(username, name, email, create_at, permission, actived, is_lock, code, dob,
-                                             class_cource, new_course_id, 'StudentForm')
+        isStudentCreated = User.createRecord(str(username).strip(), str(name).strip(), str(email).strip(), create_at, str(permission).strip(), actived, is_lock, str(code).strip(), dob,
+                                             str(class_cource).strip(), new_course_id, 'StudentForm')
         if isStudentCreated is True:
             return jsonify({'status': 'success'}), 200
         else:
@@ -93,7 +92,7 @@ def update_record():
         actived = new_update.get('update_actived')
         is_lock = new_update.get('update_is_lock')
 
-        isUpdated = Student.updateRecord(int(user_id), int(student_id), code, username, name, email, dob, class_course, course_id, updated_at,
+        isUpdated = Student.updateRecord(int(user_id), int(student_id), str(code).strip(), str(username).strip(), str(name).strip(), str(email).strip(), dob, str(class_course).strip(), course_id, updated_at,
                                          actived, is_lock)
         if isUpdated is True:
             return jsonify({'status': 'success'}), 200

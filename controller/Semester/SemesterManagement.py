@@ -18,7 +18,7 @@ def create():
         new_lecture = request.get_json()
         name = new_lecture.get('new_name')
 
-        isCreated = Semester.createRecord(name)
+        isCreated = Semester.createRecord(str(name).strip())
 
         if isCreated is True:
             return jsonify({'status': 'success'}), 200
@@ -36,7 +36,7 @@ def update_record():
         name = new_update.get('update_name')
         updated_at = datetime.now(pytz.timezone('Asia/Ho_Chi_Minh')).strftime("%Y-%m-%d %H:%M:%S")
 
-        isUpdated = Semester.updateRecord(int(semester_id), name, updated_at)
+        isUpdated = Semester.updateRecord(int(semester_id), str(name).strip(), updated_at)
         if isUpdated is True:
             return jsonify({'status': 'success'}), 200
         else:
@@ -69,8 +69,8 @@ def get_records():
 @semester.route('/search', methods=['GET'])
 def search_record():
     try:
-        searchUsername = request.args.get('searchUsername')
-        searchRecord = Semester.searchUserRecord(str(searchUsername))
+        searchSemester = request.args.get('searchSemester')
+        searchRecord = Semester.searchSemesterRecord(searchSemester)
 
         return jsonify({
             'status': 'success',
@@ -82,9 +82,9 @@ def search_record():
 
 @semester.route('/delete-record', methods=['DELETE'])
 def delete():
-        delSemester = request.get_json()
-        print()
-        semester_id = delSemester.get('delSemesterID')
-        Semester.deleteRecord(semester_id)
+    delSemester = request.get_json()
+    print()
+    semester_id = delSemester.get('delSemesterID')
+    Semester.deleteRecord(semester_id)
 
-        return jsonify({'status': 'success'}), 200
+    return jsonify({'status': 'success'}), 200

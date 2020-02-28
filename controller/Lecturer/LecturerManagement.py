@@ -25,7 +25,7 @@ def create():
         actived = new_lecture.get('new_actived')
         is_lock = new_lecture.get('new_is_lock')
 
-        isCreated = User.createRecord(username, name, email, create_at, permission, actived, is_lock, '', '', '', '',
+        isCreated = User.createRecord(str(username).strip(), str(name).strip(), str(email).strip(), create_at, permission, actived, is_lock, '', '', '', '',
                                       'LecturerForm')
         if isCreated is True:
             return jsonify({'status': 'success'}), 200
@@ -47,7 +47,7 @@ def update_record():
         actived = new_update.get('update_actived')
         is_lock = new_update.get('update_is_lock')
 
-        isUpdated = Lecture.updateRecord(int(user_id), username, name, email, updated_at, actived, is_lock)
+        isUpdated = Lecture.updateRecord(int(user_id), str(username).strip(), str(name).strip(), str(email).strip(), updated_at, actived, is_lock)
         if isUpdated is True:
             return jsonify({'status': 'success'}), 200
         else:
