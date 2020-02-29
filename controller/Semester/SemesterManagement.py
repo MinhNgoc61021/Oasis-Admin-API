@@ -66,6 +66,19 @@ def get_records():
         return jsonify({'status': 'bad-request'}), 400
 
 
+@semester.route('/all-records', methods=['GET'])
+def get_all_records():
+    try:
+        record = Semester.getAllRecords()
+
+        return jsonify({
+            'status': 'success',
+            'records': record,
+        }), 200
+    except:
+        return jsonify({'status': 'bad-request'}), 400
+
+
 @semester.route('/search', methods=['GET'])
 def search_record():
     try:
@@ -82,9 +95,11 @@ def search_record():
 
 @semester.route('/delete-record', methods=['DELETE'])
 def delete():
-    delSemester = request.get_json()
-    print()
-    semester_id = delSemester.get('delSemesterID')
-    Semester.deleteRecord(semester_id)
+    try:
+        delSemester = request.get_json()
+        semester_id = delSemester.get('delSemesterID')
+        Semester.deleteRecord(semester_id)
 
-    return jsonify({'status': 'success'}), 200
+        return jsonify({'status': 'success'}), 200
+    except:
+        return jsonify({'status': 'bad-request'}), 400

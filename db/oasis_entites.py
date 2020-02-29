@@ -317,6 +317,29 @@ class Student(Base):
             sess.close()
 
     @classmethod
+    def getRecordByCourse(cls, course_id, page_index, per_page, sort_field, sort_order):
+        sess = Session()
+        try:
+            if sort_field.find('user.') != -1:
+                sort_field = sort_field.split('user.')[1]
+                query = sess.query(Student).join(User).join(t_student_course).filter(cls.student_id == t_student_course.c.student_id, t_student_course.c.course_id == course_id).order_by(getattr(
+                    getattr(User, sort_field), sort_order)())
+            else:
+                query = sess.query(Student).join(t_student_course).filter(cls.student_id == t_student_course.c.student_id, t_student_course.c.course_id == course_id).order_by(getattr(
+                    getattr(Student, sort_field), sort_order)())
+                # user_query is the user object and get_record_pagination is the index data
+
+            query, get_record_pagination = apply_pagination(query, page_number=int(page_index),
+                                                            page_size=int(per_page))
+            # many=True if user_query is a collection of many results, so that record will be serialized to a list.
+            return student_schema.dump(query, many=True), get_record_pagination
+        except:
+            sess.rollback()
+            raise
+        finally:
+            sess.close()
+
+    @classmethod
     def searchStudentRecord(cls, code):
         sess = Session()
         try:
@@ -408,10 +431,10 @@ class Course(Base):
     students = relationship('Student', secondary=t_student_course)
 
     @classmethod
-    def getRecord(cls, page_index, per_page, sort_field, sort_order):
+    def getRecord(cls,semester_id, page_index, per_page, sort_field, sort_order):
         sess = Session()
         try:
-            query = sess.query(Course).order_by(getattr(
+            query = sess.query(Course).filter(Course.semester_id == semester_id).order_by(getattr(
                 getattr(Course, sort_field), sort_order)())
 
             # user_query is the user object and get_record_pagination is the index data
@@ -475,6 +498,18 @@ class Course(Base):
         finally:
             sess.close()
 
+    @classmethod
+    def deleteRecord(cls, course_id):
+        sess = Session()
+        try:
+            course = sess.query(Course).filter(cls.course_id == course_id).one()
+            sess.delete(course)
+            sess.commit()
+        except:
+            sess.rollback()
+            raise
+        finally:
+            sess.close()
 
 t_lecture_course = Table(
     'lecture_course', TableMeta,
@@ -739,6 +774,19 @@ class Semester(Base):
                                                             page_size=int(per_page))
             # many=True if user_query is a collection of many results, so that record will be serialized to a list.
             return semester_schema.dump(query, many=True), get_record_pagination
+        except:
+            sess.rollback()
+            raise
+        finally:
+            sess.close()
+
+    @classmethod
+    def getAllRecords(cls):
+        sess = Session()
+        try:
+            query = sess.query(Semester).all()
+            return semester_schema.dump(query, many=True)
+
         except:
             sess.rollback()
             raise
@@ -1048,4 +1096,6 @@ role_schema = RoleSchema()
 student_schema = StudentSchema(
     only=['student_id', 'code', 'dob', 'class_course', 'user'])
 
-semester_schema = SemesterSchema()
+semester_schema = SemesterSchema(
+    only=['semester_id', 'name']
+)

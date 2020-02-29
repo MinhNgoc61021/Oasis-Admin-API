@@ -21,7 +21,8 @@ def create():
         description = new_lecture.get('new_description')
         semester_id = new_lecture.get('semester_id')
 
-        isCreated = Course.createRecord(str(code).strip(), name, description, int(semester_id))
+        isCreated = Course.createRecord(str(code).strip(), str(name).strip(), str(description).strip(),
+                                        int(semester_id))
 
         if isCreated is True:
             return jsonify({'status': 'success'}), 200
@@ -48,11 +49,12 @@ def search_record():
 @course.route('/records', methods=['GET'])
 def get_records():
     try:
+        semester_id = request.args.get('semester_id')
         page_index = request.args.get('page_index')
         per_page = request.args.get('per_page')
         sort_field = request.args.get('sort_field')
         sort_order = request.args.get('sort_order')
-        record = Course.getRecord(page_index, per_page, sort_field, sort_order)
+        record = Course.getRecord(semester_id, page_index, per_page, sort_field, sort_order)
 
         return jsonify({
             'status': 'success',
@@ -68,5 +70,19 @@ def get_records():
 
 @course.route('/student-course', methods=['GET'])
 def get_student_course():
-    student_id = request.args.get('student_id')
-    return jsonify({'status': 'success', 'course': Course.getStudentCourse(student_id)}), 200
+    try:
+        student_id = request.args.get('student_id')
+        return jsonify({'status': 'success', 'course': Course.getStudentCourse(student_id)}), 200
+    except:
+        return jsonify({'status': 'bad-request'}), 400
+
+
+@course.route('/delete-record', methods=['DELETE'])
+def delete():
+    try:
+        delCourse = request.get_json()
+        semester_id = delCourse.get('delCourseID')
+        Course.deleteRecord(semester_id)
+        return jsonify({'status': 'success'}), 200
+    except:
+        return jsonify({'status': 'bad-request'}), 400

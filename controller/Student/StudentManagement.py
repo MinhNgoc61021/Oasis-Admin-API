@@ -31,7 +31,8 @@ def create():
         is_lock = new_student.get('new_is_lock')
 
         print(request.get_json())
-        isStudentCreated = User.createRecord(str(username).strip(), str(name).strip(), str(email).strip(), create_at, str(permission).strip(), actived, is_lock, str(code).strip(), dob,
+        isStudentCreated = User.createRecord(str(username).strip(), str(name).strip(), str(email).strip(), create_at,
+                                             str(permission).strip(), actived, is_lock, str(code).strip(), dob,
                                              str(class_cource).strip(), new_course_id, 'StudentForm')
         if isStudentCreated is True:
             return jsonify({'status': 'success'}), 200
@@ -62,6 +63,28 @@ def get_records():
         return jsonify({'status': 'bad-request'}), 400
 
 
+@student.route('/records-by-course', methods=['GET'])
+def get_records_by_course():
+    try:
+        course_id = request.args.get('course_id')
+        page_index = request.args.get('page_index')
+        per_page = request.args.get('per_page')
+        sort_field = request.args.get('sort_field')
+        sort_order = request.args.get('sort_order')
+        record = Student.getRecordByCourse(course_id,page_index, per_page, sort_field, sort_order)
+
+        return jsonify({
+            'status': 'success',
+            'records': record[0],
+            'page_number': record[1].page_number,
+            'page_size': record[1].page_size,
+            'num_pages': record[1].num_pages,
+            'total_results': record[1].total_results
+        }), 200
+    except:
+        return jsonify({'status': 'bad-request'}), 400
+
+
 @student.route('/search', methods=['GET'])
 def search_record():
     try:
@@ -78,6 +101,7 @@ def search_record():
 
 @student.route('/update-record', methods=['PUT'])
 def update_record():
+    try:
         new_update = request.get_json()
         user_id = new_update.get('user_id')
         student_id = new_update.get('student_id')
@@ -92,12 +116,16 @@ def update_record():
         actived = new_update.get('update_actived')
         is_lock = new_update.get('update_is_lock')
 
-        isUpdated = Student.updateRecord(int(user_id), int(student_id), str(code).strip(), str(username).strip(), str(name).strip(), str(email).strip(), dob, str(class_course).strip(), course_id, updated_at,
+        isUpdated = Student.updateRecord(int(user_id), int(student_id), str(code).strip(), str(username).strip(),
+                                         str(name).strip(), str(email).strip(), dob, str(class_course).strip(),
+                                         course_id, updated_at,
                                          actived, is_lock)
         if isUpdated is True:
             return jsonify({'status': 'success'}), 200
         else:
             return jsonify({'status': 'already-exist'}), 202
+    except:
+        return jsonify({'status': 'bad-request'}), 400
 
 
 @student.route('/delete-record', methods=['DELETE'])
