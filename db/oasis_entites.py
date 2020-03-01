@@ -614,6 +614,27 @@ class Lecture(Base):
             sess.close()
 
     @classmethod
+    def getRecordByCourse(cls, course_id, page_index, per_page, sort_field, sort_order):
+        sess = Session()
+        try:
+            query = sess.query(User).join(Lecture).join(t_lecture_course).filter(
+                cls.lecture_id == t_lecture_course.c.lecture_id, t_lecture_course.c.course_id == course_id).order_by(
+                getattr(
+                    getattr(User, sort_field), sort_order)())
+
+            # user_query is the user object and get_record_pagination is the index data
+            query, get_record_pagination = apply_pagination(query, page_number=int(page_index),
+                                                            page_size=int(per_page))
+            # many=True if user_query is a collection of many results, so that record will be serialized to a list.
+            return user_schema.dump(query, many=True), get_record_pagination
+            # many=True if user_query is a collection of many results, so that record will be serialized to a list.
+        except:
+            sess.rollback()
+            raise
+        finally:
+            sess.close()
+
+    @classmethod
     def searchUserRecord(cls, username):
         sess = Session()
         try:

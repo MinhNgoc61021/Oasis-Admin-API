@@ -25,7 +25,8 @@ def create():
         actived = new_lecture.get('new_actived')
         is_lock = new_lecture.get('new_is_lock')
 
-        isCreated = User.createRecord(str(username).strip(), str(name).strip(), str(email).strip(), create_at, permission, actived, is_lock, '', '', '', '',
+        isCreated = User.createRecord(str(username).strip(), str(name).strip(), str(email).strip(), create_at,
+                                      permission, actived, is_lock, '', '', '', '',
                                       'LecturerForm')
         if isCreated is True:
             return jsonify({'status': 'success'}), 200
@@ -47,7 +48,8 @@ def update_record():
         actived = new_update.get('update_actived')
         is_lock = new_update.get('update_is_lock')
 
-        isUpdated = Lecture.updateRecord(int(user_id), str(username).strip(), str(name).strip(), str(email).strip(), updated_at, actived, is_lock)
+        isUpdated = Lecture.updateRecord(int(user_id), str(username).strip(), str(name).strip(), str(email).strip(),
+                                         updated_at, actived, is_lock)
         if isUpdated is True:
             return jsonify({'status': 'success'}), 200
         else:
@@ -75,6 +77,25 @@ def get_records():
         }), 200
     except:
         return jsonify({'status': 'bad-request'}), 400
+
+
+@lecturer.route('/records-by-course', methods=['GET'])
+def get_records_by_course():
+        course_id = request.args.get('course_id')
+        page_index = request.args.get('page_index')
+        per_page = request.args.get('per_page')
+        sort_field = request.args.get('sort_field')
+        sort_order = request.args.get('sort_order')
+        record = Lecture.getRecordByCourse(course_id, page_index, per_page, sort_field, sort_order)
+
+        return jsonify({
+            'status': 'success',
+            'records': record[0],
+            'page_number': record[1].page_number,
+            'page_size': record[1].page_size,
+            'num_pages': record[1].num_pages,
+            'total_results': record[1].total_results
+        }), 200
 
 
 @lecturer.route('/search', methods=['GET'])
