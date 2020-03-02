@@ -115,10 +115,11 @@ def search_record():
 @lecturer.route('/delete-record', methods=['DELETE'])
 def delete():
     try:
-        delStudent = request.get_json()
-        user_id = delStudent.get('delUserID')
+        delLecturer = request.get_json()
+        user_id = delLecturer.get('delUserID')
         Lecture.deleteRecord(user_id)
 
         return jsonify({'status': 'success'}), 200
     except:
         return jsonify({'status': 'bad-request'}), 400
+

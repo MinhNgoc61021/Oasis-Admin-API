@@ -414,6 +414,19 @@ class Student(Base):
         finally:
             sess.close()
 
+    @classmethod
+    def deleteRecordByCourse(cls, student_id, course_id):
+        sess = Session()
+        try:
+            delete_student_course = t_student_course.delete().where(t_student_course.c.student_id == student_id).where(t_student_course.c.course_id == course_id)
+            sess.execute(delete_student_course)
+            sess.commit()
+        except:
+            sess.rollback()
+            raise
+        finally:
+            sess.close()
+
 
 class Course(Base):
     __tablename__ = 'course'
@@ -691,7 +704,19 @@ class Lecture(Base):
         finally:
             sess.close()
 
-
+    @classmethod
+    def deleteRecordByCourse(cls, lecture_id, course_id):
+        sess = Session()
+        try:
+            delete_lecturer_course = t_student_course.delete().where(t_lecture_course.c.lecture_id == lecture_id).where(
+                t_student_course.c.course_id == course_id)
+            sess.execute(delete_lecturer_course)
+            sess.commit()
+        except:
+            sess.rollback()
+            raise
+        finally:
+            sess.close()
 class Problem(Base):
     __tablename__ = 'problem'
 

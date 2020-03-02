@@ -138,3 +138,13 @@ def delete():
         return jsonify({'status': 'success'}), 200
     except:
         return jsonify({'status': 'bad-request'}), 400
+
+
+@student.route('/delete-student-course-record', methods=['DELETE'])
+def delete_student_course():
+        delStudent = request.get_json()
+        course_id = delStudent.get('course_id')
+        user_id = delStudent.get('delUserID')
+        Student.deleteRecordByCourse(user_id, course_id)
+
+        return jsonify({'status': 'success'}), 200
