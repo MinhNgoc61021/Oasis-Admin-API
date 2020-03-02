@@ -483,6 +483,30 @@ class Course(Base):
             sess.close()
 
     @classmethod
+    def updateRecord(cls, semester_id, update_name, update_at):
+        sess = Session()
+        try:
+            # A dictionary of key - values with key being the attribute to be updated, and value being the new
+            # contents of attribute
+            if sess.query(Semester).filter(
+                    or_(cls.name == update_name),
+                    cls.semester_id != semester_id).scalar() is None:
+
+                sess.query(Semester).filter(cls.semester_id == semester_id).update(
+                    {cls.name: update_name,
+                     cls.updated_at: update_at})
+
+                sess.commit()
+                return True
+            else:
+                return False
+        except:
+            sess.rollback()
+            raise
+        finally:
+            sess.close()
+
+    @classmethod
     def searchCourseRecord(cls, code):
         sess = Session()
         try:
@@ -705,10 +729,13 @@ class Lecture(Base):
             sess.close()
 
     @classmethod
-    def deleteRecordByCourse(cls, lecture_id, course_id):
+    def deleteRecordByCourse(cls, user_id, course_id):
         sess = Session()
         try:
-            delete_lecturer_course = t_student_course.delete().where(t_lecture_course.c.lecture_id == lecture_id).where(
+            getLecturer = sess.query(Lecture).filter(cls.user_id == user_id).first()
+            print('BEBE')
+            print(getLecturer[0])
+            delete_lecturer_course = t_student_course.delete().where(t_lecture_course.c.lecture_id == getLecturer[1]).where(
                 t_student_course.c.course_id == course_id)
             sess.execute(delete_lecturer_course)
             sess.commit()

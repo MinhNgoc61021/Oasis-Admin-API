@@ -81,6 +81,7 @@ def get_records():
 
 @lecturer.route('/records-by-course', methods=['GET'])
 def get_records_by_course():
+    try:
         course_id = request.args.get('course_id')
         page_index = request.args.get('page_index')
         per_page = request.args.get('per_page')
@@ -96,6 +97,8 @@ def get_records_by_course():
             'num_pages': record[1].num_pages,
             'total_results': record[1].total_results
         }), 200
+    except:
+        return jsonify({'status': 'bad-request'}), 400
 
 
 @lecturer.route('/search', methods=['GET'])
@@ -115,11 +118,23 @@ def search_record():
 @lecturer.route('/delete-record', methods=['DELETE'])
 def delete():
     try:
-        delLecturer = request.get_json()
-        user_id = delLecturer.get('delUserID')
+        delStudent = request.get_json()
+        user_id = delStudent.get('delUserID')
         Lecture.deleteRecord(user_id)
 
         return jsonify({'status': 'success'}), 200
     except:
         return jsonify({'status': 'bad-request'}), 400
 
+
+@lecturer.route('/delete-lecturer-course-record', methods=['DELETE'])
+def delete_student_course():
+    try:
+        delStudent = request.get_json()
+        course_id = delStudent.get('course_id')
+        user_id = delStudent.get('delUserID')
+        Lecture.deleteRecordByCourse(user_id, course_id)
+
+        return jsonify({'status': 'success'}), 200
+    except:
+        return jsonify({'status': 'bad-request'}), 400

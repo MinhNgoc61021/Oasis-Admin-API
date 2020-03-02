@@ -8,7 +8,7 @@ from flask import (
 )
 
 from db.oasis_entites import Course
-
+from datetime import datetime
 course = Blueprint('CourseManagement', __name__, url_prefix='/course')
 
 
@@ -25,6 +25,25 @@ def create():
                                         int(semester_id))
 
         if isCreated is True:
+            return jsonify({'status': 'success'}), 200
+        else:
+            return jsonify({'status': 'already-exist'}), 202
+    except:
+        return jsonify({'status': 'bad-request'}), 400
+
+
+@course.route('/update-record', methods=['PUT'])
+def update_record():
+    try:
+        new_update = request.get_json()
+        course_id = new_update.get('course_id')
+        update_code = new_update.get('update_code')
+        update_name = new_update.get('update_name')
+        update_description = new_update.get('update_description')
+        updated_at = datetime.now(pytz.timezone('Asia/Ho_Chi_Minh')).strftime("%Y-%m-%d %H:%M:%S")
+
+        isUpdated = Course.updateRecord(int(course_id), str(update_code).strip(), updated_at)
+        if isUpdated is True:
             return jsonify({'status': 'success'}), 200
         else:
             return jsonify({'status': 'already-exist'}), 202
