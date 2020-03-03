@@ -42,14 +42,10 @@ def update_record():
         update_description = new_update.get('update_description')
         updated_at = datetime.now(pytz.timezone('Asia/Ho_Chi_Minh')).strftime("%Y-%m-%d %H:%M:%S")
 
-        isUpdated = Course.updateRecord(int(course_id), str(update_code).strip(), updated_at)
-        if isUpdated is True:
-            return jsonify({'status': 'success'}), 200
-        else:
-            return jsonify({'status': 'already-exist'}), 202
+        Course.updateRecord(course_id, str(update_code).strip(), str(update_name).strip(), str(update_description).strip(), updated_at)
+        return jsonify({'status': 'success'}), 200
     except:
         return jsonify({'status': 'bad-request'}), 400
-
 
 @course.route('/search', methods=['GET'])
 def search_record():
