@@ -294,6 +294,20 @@ class Student(Base):
     courses = relationship('Course', secondary=t_student_course, lazy='dynamic')
 
     @classmethod
+    def createRecordByCourse(cls, course_id, student_id):
+        sess = Session()
+        try:
+            new_student_course = t_student_course.insert().values({'student_id': student_id,
+                                                                   'course_id': course_id})
+            sess.execute(new_student_course)
+            sess.commit()
+        except:
+            sess.rollback()
+            raise
+        finally:
+            sess.close()
+
+    @classmethod
     def getRecord(cls, page_index, per_page, sort_field, sort_order):
         sess = Session()
         try:
@@ -322,10 +336,14 @@ class Student(Base):
         try:
             if sort_field.find('user.') != -1:
                 sort_field = sort_field.split('user.')[1]
-                query = sess.query(Student).join(User).join(t_student_course).filter(cls.student_id == t_student_course.c.student_id, t_student_course.c.course_id == course_id).order_by(getattr(
+                query = sess.query(Student).join(User).join(t_student_course).filter(
+                    cls.student_id == t_student_course.c.student_id,
+                    t_student_course.c.course_id == course_id).order_by(getattr(
                     getattr(User, sort_field), sort_order)())
             else:
-                query = sess.query(Student).join(t_student_course).filter(cls.student_id == t_student_course.c.student_id, t_student_course.c.course_id == course_id).order_by(getattr(
+                query = sess.query(Student).join(t_student_course).filter(
+                    cls.student_id == t_student_course.c.student_id,
+                    t_student_course.c.course_id == course_id).order_by(getattr(
                     getattr(Student, sort_field), sort_order)())
                 # user_query is the user object and get_record_pagination is the index data
 
@@ -345,6 +363,27 @@ class Student(Base):
         try:
             user = sess.query(Student).filter(cls.code.like('%' + code + '%')).order_by(cls.code.asc())
             return student_schema.dump(user, many=True)
+        except:
+            sess.rollback()
+            raise
+        finally:
+            sess.close()
+
+    @classmethod
+    def searchStudentRecordFromCourse(cls, course_id, code, search_type):
+        sess = Session()
+        try:
+            if search_type == 'in_course':
+                student = sess.query(Student).join(t_student_course).filter(cls.code.like('%' + code + '%'),
+                                                                            cls.student_id == t_student_course.c.student_id,
+                                                                            t_student_course.c.course_id == course_id
+                                                                            ).order_by(cls.code.asc())
+                return student_schema.dump(student, many=True)
+            else:
+                student = sess.query(Student).outerjoin(t_student_course).filter(cls.code.like('%' + code + '%'),
+                                                                                 t_student_course.c.student_id == None,
+                                                                                 ).order_by(cls.code.asc())
+                return student_schema.dump(student, many=True)
         except:
             sess.rollback()
             raise
@@ -418,7 +457,8 @@ class Student(Base):
     def deleteRecordByCourse(cls, student_id, course_id):
         sess = Session()
         try:
-            delete_student_course = t_student_course.delete().where(t_student_course.c.student_id == student_id).where(t_student_course.c.course_id == course_id)
+            delete_student_course = t_student_course.delete().where(t_student_course.c.student_id == student_id).where(
+                t_student_course.c.course_id == course_id)
             sess.execute(delete_student_course)
             sess.commit()
         except:
@@ -444,7 +484,7 @@ class Course(Base):
     students = relationship('Student', secondary=t_student_course)
 
     @classmethod
-    def getRecord(cls,semester_id, page_index, per_page, sort_field, sort_order):
+    def getRecord(cls, semester_id, page_index, per_page, sort_field, sort_order):
         sess = Session()
         try:
             query = sess.query(Course).filter(Course.semester_id == semester_id).order_by(getattr(
@@ -490,10 +530,10 @@ class Course(Base):
             # contents of attribute
 
             sess.query(Course).filter(cls.course_id == course_id).update(
-                    {cls.name: update_name,
-                     cls.code: update_code,
-                     cls.description: update_description,
-                     cls.updated_at: update_at})
+                {cls.name: update_name,
+                 cls.code: update_code,
+                 cls.description: update_description,
+                 cls.updated_at: update_at})
             sess.commit()
         except:
             sess.rollback()
@@ -542,6 +582,7 @@ class Course(Base):
             raise
         finally:
             sess.close()
+
 
 t_lecture_course = Table(
     'lecture_course', TableMeta,
@@ -626,6 +667,9 @@ class Lecture(Base):
     course = relationship('Course', secondary='lecture_course')
 
     user = relationship('User', backref=backref("user_lecture", uselist=False))
+
+    # @classmethod
+    # def createRecordByCourse(cls, course_id, user_id):
 
     @classmethod
     def getRecord(cls, page_index, per_page, sort_field, sort_order):
@@ -730,7 +774,8 @@ class Lecture(Base):
             getLecturer = sess.query(Lecture).filter(cls.user_id == user_id).first()
             print('BEBE')
             print(getLecturer[0])
-            delete_lecturer_course = t_student_course.delete().where(t_lecture_course.c.lecture_id == getLecturer[1]).where(
+            delete_lecturer_course = t_student_course.delete().where(
+                t_lecture_course.c.lecture_id == getLecturer[1]).where(
                 t_student_course.c.course_id == course_id)
             sess.execute(delete_lecturer_course)
             sess.commit()
@@ -739,6 +784,8 @@ class Lecture(Base):
             raise
         finally:
             sess.close()
+
+
 class Problem(Base):
     __tablename__ = 'problem'
 

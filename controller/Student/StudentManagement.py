@@ -42,6 +42,20 @@ def create():
         return jsonify({'status': 'bad-request'}), 400
 
 
+@student.route('/create-student-course-record', methods=['POST'])
+def create_by_course():
+    try:
+        new_student_course = request.get_json()
+        student_id = new_student_course.get('new_student_id')
+        course_id = new_student_course.get('course_id')
+        print('BEBE')
+        print(new_student_course)
+        Student.createRecordByCourse(course_id, student_id)
+        return jsonify({'status': 'success'}), 200
+    except:
+        return jsonify({'status': 'bad-request'}), 400
+
+
 @student.route('/records', methods=['GET'])
 def get_records():
     try:
@@ -71,7 +85,7 @@ def get_records_by_course():
         per_page = request.args.get('per_page')
         sort_field = request.args.get('sort_field')
         sort_order = request.args.get('sort_order')
-        record = Student.getRecordByCourse(course_id,page_index, per_page, sort_field, sort_order)
+        record = Student.getRecordByCourse(course_id, page_index, per_page, sort_field, sort_order)
 
         return jsonify({
             'status': 'success',
@@ -91,6 +105,35 @@ def search_record():
         searchCode = request.args.get('searchCode')
         searchRecord = Student.searchStudentRecord(str(searchCode))
 
+        return jsonify({
+            'status': 'success',
+            'search_results': searchRecord,
+        }), 200
+    except:
+        return jsonify({'status': 'bad-request'}), 400
+
+
+@student.route('/search-from-course', methods=['GET'])
+def search_record_from_cource():
+    try:
+        course_id = request.args.get('course_id')
+        searchCode = request.args.get('searchCode')
+        searchRecord = Student.searchStudentRecordFromCourse(course_id, str(searchCode), 'in_course')
+
+        return jsonify({
+            'status': 'success',
+            'search_results': searchRecord,
+        }), 200
+    except:
+        return jsonify({'status': 'bad-request'}), 400
+
+
+@student.route('/search-outside-course', methods=['GET'])
+def search_record_outside_cource():
+    try:
+        course_id = request.args.get('course_id')
+        searchCode = request.args.get('searchCode')
+        searchRecord = Student.searchStudentRecordFromCourse(course_id, str(searchCode), 'outside_course')
         return jsonify({
             'status': 'success',
             'search_results': searchRecord,
@@ -136,6 +179,16 @@ def delete():
         Student.deleteRecord(user_id)
 
         return jsonify({'status': 'success'}), 200
+    except:
+        return jsonify({'status': 'bad-request'}), 400
+
+
+@student.route('/create-student-course-record', methods=['POST'])
+def create_student_course():
+    try:
+        new_student_course = request.get_json()
+        student_id = new_student_course.get('student_id')
+        course_id = new_student_course.get('course_id')
     except:
         return jsonify({'status': 'bad-request'}), 400
 
