@@ -668,8 +668,30 @@ class Lecture(Base):
 
     user = relationship('User', backref=backref("user_lecture", uselist=False))
 
-    # @classmethod
-    # def createRecordByCourse(cls, course_id, user_id):
+    @classmethod
+    def createRecordByCourse(cls, course_id, user_id):
+        sess = Session()
+        try:
+            if sess.query(User).join(Lecture).join(t_lecture_course).filter(
+                    User.user_id == user_id,
+                    cls.lecture_id == t_lecture_course.c.lecture_id,
+                    t_lecture_course.c.course_id == course_id
+            ).scalar() is None:
+
+                getLecturer = sess.query(Lecture).filter(cls.user_id == user_id).one()
+
+                new_lecturer_course = t_lecture_course.insert().values({'lecture_id': getLecturer.lecture_id,
+                                                                        'course_id': course_id})
+                sess.execute(new_lecturer_course)
+                sess.commit()
+                return True
+            else:
+                return False
+        except:
+            sess.rollback()
+            raise
+        finally:
+            sess.close()
 
     @classmethod
     def getRecord(cls, page_index, per_page, sort_field, sort_order):
@@ -711,12 +733,40 @@ class Lecture(Base):
             sess.close()
 
     @classmethod
-    def searchUserRecord(cls, username):
+    def searchLecturerRecord(cls, username):
         sess = Session()
         try:
-            user = sess.query(User).join(Lecture).filter(User.username.like('%' + username + '%')).order_by(
+            lecturer = sess.query(User).join(Lecture).filter(User.username.like('%' + username + '%')).order_by(
                 User.username.asc())
-            return user_schema.dump(user, many=True)
+
+            return user_schema.dump(lecturer, many=True)
+        except:
+            sess.rollback()
+            raise
+        finally:
+            sess.close()
+
+    @classmethod
+    def searchLecturerRecordFromCourse(cls, course_id, username, search_type):
+        sess = Session()
+        try:
+            if search_type == 'in_course':
+                lecturer = sess.query(User).join(Lecture).join(t_lecture_course).filter(
+                    User.username.like('%' + username + '%'),
+                    cls.lecture_id == t_lecture_course.c.lecture_id,
+                    t_lecture_course.c.course_id == course_id
+                ).order_by(User.username.asc())
+
+                return user_schema.dump(lecturer, many=True)
+            else:
+                lecturer = sess.query(User).join(Lecture).join(t_lecture_course).distinct(
+                    t_lecture_course.c.lecture_id).filter(
+                    User.username.like('%' + username + '%'),
+                    cls.lecture_id == t_lecture_course.c.lecture_id,
+                    t_lecture_course.c.course_id != course_id,
+                ).order_by(User.username.asc())
+
+                return user_schema.dump(lecturer, many=True)
         except:
             sess.rollback()
             raise
@@ -771,12 +821,10 @@ class Lecture(Base):
     def deleteRecordByCourse(cls, user_id, course_id):
         sess = Session()
         try:
-            getLecturer = sess.query(Lecture).filter(cls.user_id == user_id).first()
-            print('BEBE')
-            print(getLecturer[0])
-            delete_lecturer_course = t_student_course.delete().where(
-                t_lecture_course.c.lecture_id == getLecturer[1]).where(
-                t_student_course.c.course_id == course_id)
+            getLecturer = sess.query(Lecture).filter(cls.user_id == user_id).one()
+            delete_lecturer_course = t_lecture_course.delete().where(
+                t_lecture_course.c.lecture_id == getLecturer.lecture_id).where(
+                t_lecture_course.c.course_id == course_id)
             sess.execute(delete_lecturer_course)
             sess.commit()
         except:

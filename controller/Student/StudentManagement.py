@@ -48,9 +48,8 @@ def create_by_course():
         new_student_course = request.get_json()
         student_id = new_student_course.get('new_student_id')
         course_id = new_student_course.get('course_id')
-        print('BEBE')
-        print(new_student_course)
         Student.createRecordByCourse(course_id, student_id)
+
         return jsonify({'status': 'success'}), 200
     except:
         return jsonify({'status': 'bad-request'}), 400
@@ -114,7 +113,7 @@ def search_record():
 
 
 @student.route('/search-from-course', methods=['GET'])
-def search_record_from_cource():
+def search_record_from_course():
     try:
         course_id = request.args.get('course_id')
         searchCode = request.args.get('searchCode')
@@ -129,11 +128,12 @@ def search_record_from_cource():
 
 
 @student.route('/search-outside-course', methods=['GET'])
-def search_record_outside_cource():
+def search_record_outside_course():
     try:
         course_id = request.args.get('course_id')
         searchCode = request.args.get('searchCode')
         searchRecord = Student.searchStudentRecordFromCourse(course_id, str(searchCode), 'outside_course')
+
         return jsonify({
             'status': 'success',
             'search_results': searchRecord,

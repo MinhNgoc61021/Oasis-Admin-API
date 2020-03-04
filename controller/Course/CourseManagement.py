@@ -42,7 +42,8 @@ def update_record():
         update_name = new_update.get('update_name')
         update_description = new_update.get('update_description')
         updated_at = datetime.now(pytz.timezone('Asia/Ho_Chi_Minh')).strftime("%Y-%m-%d %H:%M:%S")
-
+        print('BEBE')
+        print(new_update)
         Course.updateRecord(course_id, str(update_code).strip(), str(update_name).strip(),
                             str(update_description).strip(), updated_at)
         return jsonify({'status': 'success'}), 200
