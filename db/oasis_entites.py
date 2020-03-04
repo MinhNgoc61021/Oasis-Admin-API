@@ -863,6 +863,24 @@ class Problem(Base):
 
     category = relationship('ProblemCategory')
 
+    @classmethod
+    def getRecord(cls, page_index, per_page, sort_field, sort_order):
+        sess = Session()
+        try:
+            query = sess.query(Problem).order_by(getattr(
+                getattr(Problem, sort_field), sort_order)())
+
+            # user_query is the user object and get_record_pagination is the index data
+            query, get_record_pagination = apply_pagination(query, page_number=int(page_index),
+                                                            page_size=int(per_page))
+            # many=True if user_query is a collection of many results, so that record will be serialized to a list.
+            return problem_schema.dump(query, many=True), get_record_pagination
+        except:
+            sess.rollback()
+            raise
+        finally:
+            sess.close()
+
 
 class ProblemCategory(Base):
     __tablename__ = 'problem_category'
@@ -1251,6 +1269,11 @@ class SemesterSchema(ModelSchema):
         model = Semester
 
 
+class ProblemSchema(ModelSchema):
+    class Meta:
+        model = Problem
+
+
 user_schema = UserSchema(
     only=['user_id', 'username', 'name', 'email', 'actived', 'is_lock'])
 
@@ -1262,3 +1285,5 @@ student_schema = StudentSchema(
 semester_schema = SemesterSchema(
     only=['semester_id', 'name']
 )
+
+problem_schema = ProblemSchema()

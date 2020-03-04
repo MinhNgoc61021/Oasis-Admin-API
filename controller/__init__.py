@@ -5,6 +5,7 @@ from controller.Course.CourseManagement import course
 from controller.Student.StudentManagement import student
 from controller.Lecturer.LecturerManagement import lecturer
 from controller.Semester.SemesterManagement import semester
+from controller.Problem.ProblemManagement import problem
 from db import init_db
 
 
@@ -17,4 +18,5 @@ def create_app():
     app.register_blueprint(course)
     app.register_blueprint(lecturer)
     app.register_blueprint(semester)
+    app.register_blueprint(problem)
     return app
