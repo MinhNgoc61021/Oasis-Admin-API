@@ -148,15 +148,17 @@ def search_record_from_course():
 
 @lecturer.route('/search-outside-course', methods=['GET'])
 def search_record_outside_course():
-    course_id = request.args.get('course_id')
-    searchUsername = request.args.get('searchUsername')
-    searchRecord = Lecture.searchLecturerRecordFromCourse(course_id, str(searchUsername), 'outside_course')
+    try:
+        course_id = request.args.get('course_id')
+        searchUsername = request.args.get('searchUsername')
+        searchRecord = Lecture.searchLecturerRecordFromCourse(course_id, str(searchUsername), 'outside_course')
 
-    return jsonify({
-        'status': 'success',
-        'search_results': searchRecord,
-    }), 200
-
+        return jsonify({
+            'status': 'success',
+            'search_results': searchRecord,
+        }), 200
+    except:
+        return jsonify({'status': 'bad-request'}), 400
 
 @lecturer.route('/delete-record', methods=['DELETE'])
 def delete():
