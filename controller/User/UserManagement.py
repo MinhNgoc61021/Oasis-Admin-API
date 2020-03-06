@@ -60,8 +60,8 @@ def create():
         actived = new_user.get('new_actived')
         is_lock = new_user.get('new_is_lock')
 
-        isCreated = User.createRecord(str(username).strip(), str(name).strip(), str(email).strip(), create_at, str(permission).strip(), actived, is_lock, '', '', '', '',
-                                      'UserForm')
+        isCreated = User.createRecord(str(username).strip(), str(name).strip(), str(email).strip(), create_at,
+                                      str(permission).strip(), actived, is_lock, None, None, None, None)
         if isCreated is True:
             return jsonify({'status': 'success'}), 200
         else:
@@ -83,7 +83,8 @@ def update_record():
         actived = new_update.get('update_actived')
         is_lock = new_update.get('update_is_lock')
 
-        isUpdated = User.updateRecord(int(user_id), str(username).strip(), str(name).strip(), str(email).strip(), updated_at, actived, is_lock, str(permission).strip())
+        isUpdated = User.updateRecord(int(user_id), str(username).strip(), str(name).strip(), str(email).strip(),
+                                      updated_at, actived, is_lock, str(permission).strip())
         if isUpdated is True:
             return jsonify({'status': 'success'}), 200
         else:

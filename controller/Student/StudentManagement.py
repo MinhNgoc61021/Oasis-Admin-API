@@ -33,7 +33,7 @@ def create():
         print(request.get_json())
         isStudentCreated = User.createRecord(str(username).strip(), str(name).strip(), str(email).strip(), create_at,
                                              str(permission).strip(), actived, is_lock, str(code).strip(), dob,
-                                             str(class_cource).strip(), new_course_id, 'StudentForm')
+                                             str(class_cource).strip(), new_course_id)
         if isStudentCreated is True:
             return jsonify({'status': 'success'}), 200
         else:

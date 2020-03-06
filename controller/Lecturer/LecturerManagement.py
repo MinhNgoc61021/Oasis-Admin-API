@@ -26,8 +26,7 @@ def create():
         is_lock = new_lecture.get('new_is_lock')
 
         isCreated = User.createRecord(str(username).strip(), str(name).strip(), str(email).strip(), create_at,
-                                      permission, actived, is_lock, '', '', '', '',
-                                      'LecturerForm')
+                                      permission, actived, is_lock, '', '', '')
         if isCreated is True:
             return jsonify({'status': 'success'}), 200
         else:

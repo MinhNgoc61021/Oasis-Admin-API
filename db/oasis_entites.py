@@ -3,7 +3,7 @@ from flask_bcrypt import generate_password_hash, check_password_hash
 from marshmallow_sqlalchemy import *
 from marshmallow_sqlalchemy.fields import Nested
 from sqlalchemy import *
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy.orm import relationship, backref, joinedload
 from sqlalchemy.dialects.mysql import *
 from sqlalchemy_filters import apply_pagination
 
@@ -182,8 +182,8 @@ class User(Base):
             sess.close()
 
     @classmethod
-    def createRecord(cls, username, name, email, create_at, permission, actived, is_lock, code, dob, class_cource,
-                     course_id, form_type):
+    def createRecord(cls, username, name, email, create_at, permission, actived, is_lock, code, dob, class_course,
+                     course_id):
         sess = Session()
         try:
             if sess.query(User).filter(
@@ -198,42 +198,46 @@ class User(Base):
                                 actived=actived,
                                 is_lock=is_lock)
                 sess.add(new_user)
+                sess.commit()
                 user_id = sess.query(User.user_id).filter(cls.username == username).one()
                 if permission == 'Sinh viên':
                     role_id = 1
                     new_student_role = t_user_role.insert().values({'user_id': user_id[0],
                                                                     'role_id': role_id})
                     sess.execute(new_student_role)
-                    if form_type != 'UserForm':
+                    if dob is not None and class_course is not None and code is not None:
                         new_student = Student(code=code,
                                               dob=dob,
-                                              class_course=class_cource,
+                                              class_course=class_course,
                                               user_id=user_id[0])
                         sess.add(new_student)
                         sess.commit()
+                        if course_id is not None:
+                            student_id = sess.query(Student.student_id).filter(Student.user_id == user_id[0]).one()
 
-                        student_id = sess.query(Student.student_id).filter(Student.user_id == user_id[0]).one()
-
-                        new_student_course = t_student_course.insert().values({'student_id': student_id[0],
-                                                                               'course_id': course_id})
-                        sess.execute(new_student_course)
+                            new_student_course = t_student_course.insert().values({'student_id': student_id[0],
+                                                                                   'course_id': course_id})
+                            sess.execute(new_student_course)
                     else:
-                        new_student = Student(code=code,
+                        new_student = Student(code=username,
                                               user_id=user_id[0])
                         sess.add(new_student)
+
                 elif permission == 'Giảng viên':
                     role_id = 2
                     new_lecture_role = t_user_role.insert().values({'user_id': user_id[0],
                                                                     'role_id': role_id})
                     sess.execute(new_lecture_role)
-                    if form_type != 'UserForm':
-                        new_lecture = Lecture(user_id=user_id[0])
-                        sess.add(new_lecture)
+                    new_lecture = Lecture(user_id=user_id[0])
+                    sess.add(new_lecture)
                 else:
                     role_id = 3
                     new_admin_role = t_user_role.insert().values({'user_id': user_id[0],
                                                                   'role_id': role_id})
                     sess.execute(new_admin_role)
+                    new_admin = Admin(user_id=user_id[0])
+                    sess.add(new_admin)
+
                 sess.commit()
                 return True
             else:
@@ -834,6 +838,13 @@ class Lecture(Base):
             sess.close()
 
 
+class ProblemCategory(Base):
+    __tablename__ = 'problem_category'
+
+    category_id = Column(INTEGER(11), primary_key=True)
+    name = Column(String(255), nullable=False)
+
+
 class Problem(Base):
     __tablename__ = 'problem'
 
@@ -861,32 +872,37 @@ class Problem(Base):
     # sample_output = Column(Text(collation='utf8mb4_unicode_ci'))
     # explanation = Column(Text(collation='utf8mb4_unicode_ci'))
 
-    category = relationship('ProblemCategory')
+    category = relationship('ProblemCategory', back_populates='problem')
 
     @classmethod
     def getRecord(cls, page_index, per_page, sort_field, sort_order):
         sess = Session()
         try:
-            query = sess.query(Problem).order_by(getattr(
-                getattr(Problem, sort_field), sort_order)())
+            if sort_field.find('category.') != -1:
+                sort_field = sort_field.split('category.')[1]
+                query = sess.query(Problem).join(ProblemCategory).order_by(getattr(
+                    getattr(ProblemCategory, sort_field), sort_order)())
 
-            # user_query is the user object and get_record_pagination is the index data
-            query, get_record_pagination = apply_pagination(query, page_number=int(page_index),
-                                                            page_size=int(per_page))
-            # many=True if user_query is a collection of many results, so that record will be serialized to a list.
-            return problem_schema.dump(query, many=True), get_record_pagination
+                # user_query is the user object and get_record_pagination is the index data
+                query, get_record_pagination = apply_pagination(query, page_number=int(page_index),
+                                                                page_size=int(per_page))
+                # many=True if user_query is a collection of many results, so that record will be serialized to a list.
+                return problem_schema.dump(query, many=True), get_record_pagination
+
+            else:
+                query = sess.query(Problem).options(joinedload('category')).order_by(getattr(
+                    getattr(Problem, sort_field), sort_order)())
+
+                # user_query is the user object and get_record_pagination is the index data
+                query, get_record_pagination = apply_pagination(query, page_number=int(page_index),
+                                                                page_size=int(per_page))
+                # many=True if user_query is a collection of many results, so that record will be serialized to a list.
+                return problem_schema.dump(query, many=True), get_record_pagination
         except:
             sess.rollback()
             raise
         finally:
             sess.close()
-
-
-class ProblemCategory(Base):
-    __tablename__ = 'problem_category'
-
-    category_id = Column(INTEGER(11), primary_key=True)
-    name = Column(String(255), nullable=False)
 
 
 class Role(Base):
@@ -1233,6 +1249,11 @@ Semester.course = relationship('Course',
                                back_populates='semester',
                                cascade='all, delete, delete-orphan')
 
+ProblemCategory.problem = relationship('Problem',
+                                       order_by=Problem.category_id,
+                                       back_populates='category',
+                                       cascade='all, delete, delete-orphan')
+
 
 # marshmallow schema for each entity for JSON deserialize
 class CourseSchema(ModelSchema):
@@ -1269,7 +1290,14 @@ class SemesterSchema(ModelSchema):
         model = Semester
 
 
+class ProblemCategorySchema(ModelSchema):
+    class Meta:
+        model = ProblemCategory
+
+
 class ProblemSchema(ModelSchema):
+    category = Nested(ProblemCategorySchema)
+
     class Meta:
         model = Problem
 
