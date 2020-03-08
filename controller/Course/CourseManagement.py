@@ -22,7 +22,7 @@ def create():
         description = new_lecture.get('new_description')
         semester_id = new_lecture.get('semester_id')
 
-        isCreated = Course.createRecord(str(code).strip(), str(name).strip(), str(description).strip(),
+        isCreated = Course.createRecord(str(code).strip().upper(), str(name).strip(), str(description).strip(),
                                         int(semester_id))
 
         if isCreated is True:

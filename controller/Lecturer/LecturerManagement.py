@@ -26,7 +26,7 @@ def create():
         is_lock = new_lecture.get('new_is_lock')
 
         isCreated = User.createRecord(str(username).strip(), str(name).strip(), str(email).strip(), create_at,
-                                      permission, actived, is_lock, '', '', '')
+                                      permission, actived, is_lock, '', '', '', '')
         if isCreated is True:
             return jsonify({'status': 'success'}), 200
         else:
@@ -119,8 +119,8 @@ def get_records_by_course():
 @lecturer.route('/search', methods=['GET'])
 def search_record():
     try:
-        searchUsername = request.args.get('searchUsername')
-        searchRecord = Lecture.searchLecturerRecord(str(searchUsername))
+        searchName = request.args.get('searchName')
+        searchRecord = Lecture.searchLecturerRecord(str(searchName))
 
         return jsonify({
             'status': 'success',
@@ -134,8 +134,8 @@ def search_record():
 def search_record_from_course():
     try:
         course_id = request.args.get('course_id')
-        searchUsername = request.args.get('searchUsername')
-        searchRecord = Lecture.searchLecturerRecordFromCourse(course_id, str(searchUsername), 'in_course')
+        searchName = request.args.get('searchName')
+        searchRecord = Lecture.searchLecturerRecordFromCourse(course_id, str(searchName), 'in_course')
 
         return jsonify({
             'status': 'success',
@@ -149,8 +149,8 @@ def search_record_from_course():
 def search_record_outside_course():
     try:
         course_id = request.args.get('course_id')
-        searchUsername = request.args.get('searchUsername')
-        searchRecord = Lecture.searchLecturerRecordFromCourse(course_id, str(searchUsername), 'outside_course')
+        searchName = request.args.get('searchName')
+        searchRecord = Lecture.searchLecturerRecordFromCourse(course_id, str(searchName), 'outside_course')
 
         return jsonify({
             'status': 'success',

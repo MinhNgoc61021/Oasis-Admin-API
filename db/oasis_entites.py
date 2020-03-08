@@ -298,11 +298,27 @@ class Student(Base):
     courses = relationship('Course', secondary=t_student_course, lazy='dynamic')
 
     @classmethod
-    def createRecordByCourse(cls, course_id, student_id):
+    def createRecordByCourse(cls, student_id, course_id):
         sess = Session()
         try:
             new_student_course = t_student_course.insert().values({'student_id': student_id,
                                                                    'course_id': course_id})
+            sess.execute(new_student_course)
+            sess.commit()
+        except:
+            sess.rollback()
+            raise
+        finally:
+            sess.close()
+
+    @classmethod
+    def updateRecordByCourse(cls, student_id, current_course_id, update_course_id):
+        sess = Session()
+        try:
+            new_student_course = t_student_course.update().where(t_student_course.c.course_id == current_course_id
+                                                                 ).where(t_student_course.c.student_id == student_id).values(
+                {'student_id': student_id,
+                 'course_id': update_course_id})
             sess.execute(new_student_course)
             sess.commit()
         except:
@@ -365,8 +381,8 @@ class Student(Base):
     def searchStudentRecord(cls, code):
         sess = Session()
         try:
-            user = sess.query(Student).filter(cls.code.like('%' + code + '%')).order_by(cls.code.asc())
-            return student_schema.dump(user, many=True)
+            student = sess.query(Student).filter(cls.code.like('%' + code + '%')).order_by(cls.code.asc())
+            return student_schema.dump(student, many=True)
         except:
             sess.rollback()
             raise
@@ -388,6 +404,19 @@ class Student(Base):
                                                                                  t_student_course.c.student_id == None,
                                                                                  ).order_by(cls.code.asc())
                 return student_schema.dump(student, many=True)
+        except:
+            sess.rollback()
+            raise
+        finally:
+            sess.close()
+
+    @classmethod
+    def searchStudentFromCourseExistence(cls, code):
+        sess = Session()
+        try:
+            course = sess.query(Course).join(t_student_course).join(Student).filter(cls.code == code).scalar()
+            student = sess.query(Student).filter(Student.code == code).scalar()
+            return course_schema.dump(course), student_schema.dump(student)
         except:
             sess.rollback()
             raise
@@ -509,7 +538,7 @@ class Course(Base):
     def createRecord(cls, code, name, description, semester_id):
         sess = Session()
         try:
-            if sess.query(Course).filter(or_(cls.code == code, cls.name == name)).scalar() is None:
+            if sess.query(Course).filter(cls.code == code, cls.semester_id == semester_id).scalar() is None:
                 new_course = Course(code=code,
                                     name=name,
                                     description=description,
@@ -737,11 +766,11 @@ class Lecture(Base):
             sess.close()
 
     @classmethod
-    def searchLecturerRecord(cls, username):
+    def searchLecturerRecord(cls, name):
         sess = Session()
         try:
-            lecturer = sess.query(User).join(Lecture).filter(User.username.like('%' + username + '%')).order_by(
-                User.username.asc())
+            lecturer = sess.query(User).join(Lecture).filter(User.name.like('%' + name + '%')).order_by(
+                User.name.asc())
 
             return user_schema.dump(lecturer, many=True)
         except:
@@ -751,24 +780,24 @@ class Lecture(Base):
             sess.close()
 
     @classmethod
-    def searchLecturerRecordFromCourse(cls, course_id, username, search_type):
+    def searchLecturerRecordFromCourse(cls, course_id, name, search_type):
         sess = Session()
         try:
             if search_type == 'in_course':
                 lecturer = sess.query(User).join(Lecture).join(t_lecture_course).filter(
-                    User.username.like('%' + username + '%'),
+                    User.username.like('%' + name + '%'),
                     cls.lecture_id == t_lecture_course.c.lecture_id,
                     t_lecture_course.c.course_id == course_id
-                ).order_by(User.username.asc())
+                ).order_by(User.name.asc())
 
                 return user_schema.dump(lecturer, many=True)
             else:
                 lecturer = sess.query(User).join(Lecture).join(t_lecture_course).distinct(
                     t_lecture_course.c.lecture_id).filter(
-                    User.username.like('%' + username + '%'),
+                    User.username.like('%' + name + '%'),
                     cls.lecture_id == t_lecture_course.c.lecture_id,
                     t_lecture_course.c.course_id != course_id,
-                ).order_by(User.username.asc())
+                ).order_by(User.name.asc())
 
                 return user_schema.dump(lecturer, many=True)
         except:
