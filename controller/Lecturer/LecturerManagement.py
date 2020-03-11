@@ -156,8 +156,9 @@ def search_record_outside_course():
             'status': 'success',
             'search_results': searchRecord,
         }), 200
-    except:
-        return jsonify({'status': 'bad-request'}), 400
+    except Exception as e:
+        return jsonify({'status': 'bad-request', 'error_message': e.__str__()}), 400
+
 
 @lecturer.route('/delete-record', methods=['DELETE'])
 def delete():
@@ -167,8 +168,8 @@ def delete():
         Lecture.deleteRecord(user_id)
 
         return jsonify({'status': 'success'}), 200
-    except:
-        return jsonify({'status': 'bad-request'}), 400
+    except Exception as e:
+        return jsonify({'status': 'bad-request', 'error_message': e.__str__()}), 400
 
 
 @lecturer.route('/delete-lecturer-course-record', methods=['DELETE'])
@@ -180,5 +181,5 @@ def delete_lecturer_course():
         Lecture.deleteRecordByCourse(user_id, course_id)
 
         return jsonify({'status': 'success'}), 200
-    except:
-        return jsonify({'status': 'bad-request'}), 400
+    except Exception as e:
+        return jsonify({'status': 'bad-request', 'error_message': e.__str__()}), 400

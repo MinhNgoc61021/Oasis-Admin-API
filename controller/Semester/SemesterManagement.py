@@ -24,8 +24,8 @@ def create():
             return jsonify({'status': 'success'}), 200
         else:
             return jsonify({'status': 'already-exist'}), 202
-    except:
-        return jsonify({'status': 'bad-request'}), 400
+    except Exception as e:
+        return jsonify({'status': 'bad-request', 'error_message': e.__str__()}), 400
 
 
 @semester.route('/update-record', methods=['PUT'])
@@ -41,8 +41,8 @@ def update_record():
             return jsonify({'status': 'success'}), 200
         else:
             return jsonify({'status': 'already-exist'}), 202
-    except:
-        return jsonify({'status': 'bad-request'}), 400
+    except Exception as e:
+        return jsonify({'status': 'bad-request', 'error_message': e.__str__()}), 400
 
 
 @semester.route('/records', methods=['GET'])
@@ -62,8 +62,8 @@ def get_records():
             'num_pages': record[1].num_pages,
             'total_results': record[1].total_results
         }), 200
-    except:
-        return jsonify({'status': 'bad-request'}), 400
+    except Exception as e:
+        return jsonify({'status': 'bad-request', 'error_message': e.__str__()}), 400
 
 
 @semester.route('/all-records', methods=['GET'])
@@ -75,8 +75,8 @@ def get_all_records():
             'status': 'success',
             'records': record,
         }), 200
-    except:
-        return jsonify({'status': 'bad-request'}), 400
+    except Exception as e:
+        return jsonify({'status': 'bad-request', 'error_message': e.__str__()}), 400
 
 
 @semester.route('/search', methods=['GET'])
@@ -89,8 +89,8 @@ def search_record():
             'status': 'success',
             'search_results': searchRecord,
         }), 200
-    except:
-        return jsonify({'status': 'bad-request'}), 400
+    except Exception as e:
+        return jsonify({'status': 'bad-request', 'error_message': e.__str__()}), 400
 
 
 @semester.route('/delete-record', methods=['DELETE'])
@@ -101,5 +101,5 @@ def delete():
         Semester.deleteRecord(semester_id)
 
         return jsonify({'status': 'success'}), 200
-    except:
-        return jsonify({'status': 'bad-request'}), 400
+    except Exception as e:
+        return jsonify({'status': 'bad-request', 'error_message': e.__str__()}), 400

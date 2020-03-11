@@ -29,5 +29,5 @@ def get_records():
             'num_pages': record[1].num_pages,
             'total_results': record[1].total_results
         }), 200
-    except:
-        return jsonify({'status': 'bad-request'}), 400
+    except Exception as e:
+        return jsonify({'status': 'bad-request', 'error_message': e.__str__()}), 400

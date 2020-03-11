@@ -6,10 +6,11 @@ from flask import (
     request,
     jsonify
 )
-
 from db.oasis_entites import Student
 from db.oasis_entites import User
+from pyexcel_xls import get_data
 from datetime import datetime
+import json
 
 student = Blueprint('StudentManagement', __name__, url_prefix='/student')
 
@@ -42,6 +43,18 @@ def create():
         return jsonify({'status': 'bad-request'}), 400
 
 
+@student.route('/import-excel', methods=['POST'])
+def import_excel():
+    try:
+        data = get_data(request.files['student_list_excel'])
+        # load file
+        print(json.dumps(data, ensure_ascii=False))
+
+        return jsonify({'status': 'success'}, data), 200
+    except Exception as e:
+        return jsonify({'status': 'bad-request', 'error_message': e.__str__() }), 400
+
+
 @student.route('/records', methods=['GET'])
 def get_records():
     try:
@@ -59,8 +72,8 @@ def get_records():
             'num_pages': record[1].num_pages,
             'total_results': record[1].total_results
         }), 200
-    except:
-        return jsonify({'status': 'bad-request'}), 400
+    except Exception as e:
+        return jsonify({'status': 'bad-request', 'error_message': e.__str__()}), 400
 
 
 @student.route('/records-by-course', methods=['GET'])
@@ -81,8 +94,8 @@ def get_records_by_course():
             'num_pages': record[1].num_pages,
             'total_results': record[1].total_results
         }), 200
-    except:
-        return jsonify({'status': 'bad-request'}), 400
+    except Exception as e:
+        return jsonify({'status': 'bad-request', 'error_message': e.__str__()}), 400
 
 
 @student.route('/search', methods=['GET'])
@@ -95,8 +108,8 @@ def search_record():
             'status': 'success',
             'search_results': searchRecord,
         }), 200
-    except:
-        return jsonify({'status': 'bad-request'}), 400
+    except Exception as e:
+        return jsonify({'status': 'bad-request', 'error_message': e.__str__()}), 400
 
 
 @student.route('/search-from-course', methods=['GET'])
@@ -110,8 +123,8 @@ def search_record_from_course():
             'status': 'success',
             'search_results': searchRecord,
         }), 200
-    except:
-        return jsonify({'status': 'bad-request'}), 400
+    except Exception as e:
+        return jsonify({'status': 'bad-request', 'error_message': e.__str__()}), 400
 
 
 @student.route('/search-from-course-existence', methods=['GET'])
@@ -124,8 +137,8 @@ def search_from_course_existence():
             'status': 'success',
             'search_result': searchRecord,
         }), 200
-    except:
-        return jsonify({'status': 'bad-request'}), 400
+    except Exception as e:
+        return jsonify({'status': 'bad-request', 'error_message': e.__str__()}), 400
 
 
 @student.route('/update-record', methods=['PUT'])
@@ -153,8 +166,8 @@ def update_record():
             return jsonify({'status': 'success'}), 200
         else:
             return jsonify({'status': 'already-exist'}), 202
-    except:
-        return jsonify({'status': 'bad-request'}), 400
+    except Exception as e:
+        return jsonify({'status': 'bad-request', 'error_message': e.__str__()}), 400
 
 
 @student.route('/delete-record', methods=['DELETE'])
@@ -165,8 +178,8 @@ def delete():
         Student.deleteRecord(user_id)
 
         return jsonify({'status': 'success'}), 200
-    except:
-        return jsonify({'status': 'bad-request'}), 400
+    except Exception as e:
+        return jsonify({'status': 'bad-request', 'error_message': e.__str__()}), 400
 
 
 @student.route('/create-student-course-record', methods=['POST'])
@@ -178,8 +191,8 @@ def create_student_course():
         Student.createRecordByCourse(student_id, course_id)
 
         return jsonify({'status': 'success'}), 200
-    except:
-        return jsonify({'status': 'bad-request'}), 400
+    except Exception as e:
+        return jsonify({'status': 'bad-request', 'error_message': e.__str__()}), 400
 
 
 @student.route('/update-student-course-record', methods=['PUT'])
@@ -192,8 +205,8 @@ def update_student_course():
         Student.updateRecordByCourse(student_id, current_course_id, update_course_id)
 
         return jsonify({'status': 'success'}), 200
-    except:
-        return jsonify({'status': 'bad-request'}), 400
+    except Exception as e:
+        return jsonify({'status': 'bad-request', 'error_message': e.__str__()}), 400
 
 
 @student.route('/delete-student-course-record', methods=['DELETE'])
@@ -205,5 +218,5 @@ def delete_student_course():
         Student.deleteRecordByCourse(student_id, course_id)
 
         return jsonify({'status': 'success'}), 200
-    except:
-        return jsonify({'status': 'bad-request'}), 400
+    except Exception as e:
+        return jsonify({'status': 'bad-request', 'error_message': e.__str__()}), 400

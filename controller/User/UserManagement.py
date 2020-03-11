@@ -66,8 +66,8 @@ def create():
             return jsonify({'status': 'success'}), 200
         else:
             return jsonify({'status': 'already-exist'}), 202
-    except:
-        return jsonify({'status': 'bad-request'}), 400
+    except Exception as e:
+        return jsonify({'status': 'bad-request', 'error_message': e.__str__()}), 400
 
 
 @user.route('/update-record', methods=['PUT'])
@@ -89,8 +89,8 @@ def update_record():
             return jsonify({'status': 'success'}), 200
         else:
             return jsonify({'status': 'already-exist'}), 202
-    except:
-        return jsonify({'status': 'bad-request'}), 400
+    except Exception as e:
+        return jsonify({'status': 'bad-request', 'error_message': e.__str__()}), 400
 
 
 @user.route('/delete-record', methods=['DELETE'])
@@ -101,8 +101,8 @@ def delete():
         User.deleteRecord(user_id)
 
         return jsonify({'status': 'success'}), 200
-    except:
-        return jsonify({'status': 'bad-request'}), 400
+    except Exception as e:
+        return jsonify({'status': 'bad-request', 'error_message': e.__str__()}), 400
 
 
 @user.route('/user-role', methods=['GET'])
@@ -110,5 +110,5 @@ def getRole():
     try:
         user_id = request.args.get('user_id')
         return jsonify({'status': 'success', 'role_id': Role.getRecord(user_id)}), 200
-    except:
-        return jsonify({'status': 'bad-request'}), 400
+    except Exception as e:
+        return jsonify({'status': 'bad-request', 'error_message': e.__str__()}), 400

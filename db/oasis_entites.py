@@ -8,15 +8,15 @@ from sqlalchemy.dialects.mysql import *
 from sqlalchemy_filters import apply_pagination
 
 
-# class Api(Base):
-#     __tablename__ = 'api'
-#
-#     api_id = Column(INTEGER(11), primary_key=True)
-#     method = Column(String(10), nullable=False)
-#     route = Column(String(255), nullable=False)
-#
-#     roles = relationship('Role', secondary='api_role')
-#
+class Api(Base):
+    __tablename__ = 'api'
+
+    api_id = Column(INTEGER(11), primary_key=True)
+    method = Column(String(10), nullable=False)
+    route = Column(String(255), nullable=False)
+
+    roles = relationship('Role', secondary='api_role')
+
 #
 # class CoreStore(Base):
 #     __tablename__ = 'core_store'
