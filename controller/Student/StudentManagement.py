@@ -46,11 +46,15 @@ def create():
 @student.route('/import-excel', methods=['POST'])
 def import_excel():
     try:
+        # load data
         data = get_data(request.files['student_list_excel'])
-        # load file
-        print(json.dumps(data, ensure_ascii=False))
+        processed_data = json.dumps(data, ensure_ascii=False)
 
-        return jsonify({'status': 'success'}, data), 200
+        excel_json = json.loads(processed_data)
+        for item in excel_json['DSLMH']:
+            print(item)
+            print('\n')
+        return jsonify({'status': 'success'}, excel_json), 200
     except Exception as e:
         return jsonify({'status': 'bad-request', 'error_message': e.__str__() }), 400
 
