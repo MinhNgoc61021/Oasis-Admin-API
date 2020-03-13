@@ -35,29 +35,32 @@ def get_records():
 
 @problem.route('/create-record', methods=['POST'])
 def create():
-    new_problem = request.get_json()
-    title = new_problem.get('new_title')
-    problem_statement = new_problem.get('new_problem_statement')
-    input_format = new_problem.get('new_input_format')
-    constraints = new_problem.get('new_constraints')
-    output_format = new_problem.get('new_output_format')
-    junit_rate = new_problem.get('new_junit_rate')
-    mark_io = new_problem.get('new_mark_io')
-    mark_junit = new_problem.get('new_mark_junit')
-    level = new_problem.get('new_level')
-    point = new_problem.get('new_point')
-    submit_type = new_problem.get('new_submit_type')
-    sample_code = new_problem.get('new_sample_code')
-    category_id = new_problem.get('category_id')
-    created_at = datetime.now(pytz.timezone('Asia/Ho_Chi_Minh')).strftime("%Y-%m-%d %H:%M:%S")
-    mark_parser = new_problem.get('new_mark_parser')
-    parser_rate = new_problem.get('new_parser_rate')
-    print()
-    isProblemCreated = Problem.createRecord(created_at, title, problem_statement, input_format, constraints,
-                                            output_format, int(level), int(point),
-                                            float(junit_rate), mark_io, int(mark_junit), int(mark_parser), float(parser_rate),
-                                            submit_type, sample_code, category_id)
-    if isProblemCreated is True:
-        return jsonify({'status': 'success'}), 200
-    else:
-        return jsonify({'status': 'already-exist'}), 202
+    try:
+        new_problem = request.get_json()
+        title = new_problem.get('new_title')
+        problem_statement = new_problem.get('new_problem_statement')
+        input_format = new_problem.get('new_input_format')
+        constraints = new_problem.get('new_constraints')
+        output_format = new_problem.get('new_output_format')
+        junit_rate = new_problem.get('new_junit_rate')
+        mark_io = new_problem.get('new_mark_io')
+        mark_junit = new_problem.get('new_mark_junit')
+        level = new_problem.get('new_level')
+        point = new_problem.get('new_point')
+        submit_type = new_problem.get('new_submit_type')
+        sample_code = new_problem.get('new_sample_code')
+        category_id = new_problem.get('category_id')
+        created_at = datetime.now(pytz.timezone('Asia/Ho_Chi_Minh')).strftime("%Y-%m-%d %H:%M:%S")
+        mark_parser = new_problem.get('new_mark_parser')
+        parser_rate = new_problem.get('new_parser_rate')
+        print()
+        isProblemCreated = Problem.createRecord(created_at, title, problem_statement, input_format, constraints,
+                                                output_format, int(level), int(point),
+                                                float(junit_rate), mark_io, int(mark_junit), int(mark_parser), float(parser_rate),
+                                                submit_type, sample_code, category_id)
+        if isProblemCreated is True:
+            return jsonify({'status': 'success'}), 200
+        else:
+            return jsonify({'status': 'already-exist'}), 202
+    except Exception as e:
+        return jsonify({'status': 'bad-request', 'error_message': e.__str__()}), 400
