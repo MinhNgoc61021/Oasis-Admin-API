@@ -17,6 +17,7 @@ class Api(Base):
 
     roles = relationship('Role', secondary='api_role')
 
+
 #
 # class CoreStore(Base):
 #     __tablename__ = 'core_store'
@@ -316,7 +317,8 @@ class Student(Base):
         sess = Session()
         try:
             new_student_course = t_student_course.update().where(t_student_course.c.course_id == current_course_id
-                                                                 ).where(t_student_course.c.student_id == student_id).values(
+                                                                 ).where(
+                t_student_course.c.student_id == student_id).values(
                 {'student_id': student_id,
                  'course_id': update_course_id})
             sess.execute(new_student_course)
@@ -902,6 +904,41 @@ class Problem(Base):
     # explanation = Column(Text(collation='utf8mb4_unicode_ci'))
 
     category = relationship('ProblemCategory', back_populates='problem')
+
+    @classmethod
+    def createRecord(cls, created_at, title, problem_statement, input_format, constraints, output_format, level, point,
+                     junit_rate, mark_io, mark_junit, mark_parser, parser_rate, submit_type, sample_code, category_id):
+        sess = Session()
+        try:
+            if sess.query(Problem).filter(
+                    cls.title == title
+            ).scalar() is None:
+                new_problem = Problem(created_at=created_at,
+                                      title=title,
+                                      problem_statement=problem_statement,
+                                      input_format=input_format,
+                                      constraints=constraints,
+                                      output_format=output_format,
+                                      level=level,
+                                      point=point,
+                                      junit_rate=junit_rate,
+                                      mark_io=mark_io,
+                                      mark_junit=mark_junit,
+                                      mark_parser=mark_parser,
+                                      parser_rate=parser_rate,
+                                      submit_type=submit_type,
+                                      sample_code=sample_code,
+                                      category_id=category_id)
+                sess.add(new_problem)
+                sess.commit()
+                return True
+            else:
+                return False
+        except:
+            sess.rollback()
+            raise
+        finally:
+            sess.close()
 
     @classmethod
     def getRecord(cls, page_index, per_page, sort_field, sort_order):

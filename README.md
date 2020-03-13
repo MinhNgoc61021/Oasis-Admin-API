@@ -6,6 +6,6 @@ Phần mềm quản lý dành cho Admin hệ thống OASIS
 
 | Thành phần  | Miêu tả                                         |
 | ----------- | ----------------------------------------------- |
-| Client Side | Vue CLI, Vuex, Bootstrap 4, Webpack             |
+| Client Side | Vue CLI, Vuex, vuex-persistedstate, Bootstrap 4, Webpack |
 | Server Side | Flask (Python)                                  |
-| Database | MySQL 5.7, SQLAlchemy, SQLAlchemy Marshmallow      |
+| Database | MySQL 5.7, SQLAlchemy (Core, ORM), SQLAlchemy Marshmallow |

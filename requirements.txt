@@ -5,6 +5,9 @@ flask-mysql
 flask_restful
 Flask-Excel
 pyexcel-xls
+pyexcel-xlsx
+pandas
+openpyxl
 mysqlclient
 PyJWT
 marshmallow-sqlalchemy
