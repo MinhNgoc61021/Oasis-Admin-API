@@ -64,3 +64,14 @@ def create():
             return jsonify({'status': 'already-exist'}), 202
     except Exception as e:
         return jsonify({'status': 'bad-request', 'error_message': e.__str__()}), 400
+
+@problem.route('/delete-record', methods=['DELETE'])
+def delete():
+    try:
+        delProblem = request.get_json()
+        problem_id = delProblem.get('delProblemID')
+        Problem.deleteRecord(problem_id)
+
+        return jsonify({'status': 'success'}), 200
+    except Exception as e:
+        return jsonify({'status': 'bad-request', 'error_message': e.__str__()}), 400

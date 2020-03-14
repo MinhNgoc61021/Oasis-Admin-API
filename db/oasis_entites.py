@@ -1,7 +1,7 @@
 from db import Session, Base, TableMeta
 from flask_bcrypt import generate_password_hash, check_password_hash
 from marshmallow_sqlalchemy import *
-from marshmallow_sqlalchemy.fields import Nested
+from marshmallow_sqlalchemy.fields import *
 from sqlalchemy import *
 from sqlalchemy.orm import relationship, backref, joinedload
 from sqlalchemy.dialects.mysql import *
@@ -889,11 +889,11 @@ class Problem(Base):
     output_format = Column(MEDIUMTEXT)
     level = Column(TINYINT(4), nullable=False, server_default=text("'1'"))
     point = Column(INTEGER(11), nullable=False, server_default=text("'100'"))
-    junit_rate = Column(INTEGER(11), nullable=False, server_default=text("'0.4'"))
+    junit_rate = Column(DOUBLE, nullable=False, server_default=text("'0.4'"))
     mark_io = Column(INTEGER(11), nullable=False, server_default=text("'0'"))
     mark_junit = Column(INTEGER(11), nullable=False, server_default=text("'0'"))
     mark_parser = Column(INTEGER(11), nullable=False, server_default=text("'0'"))
-    parser_rate = Column(INTEGER(11), nullable=False, server_default=text("'0.6'"))
+    parser_rate = Column(DOUBLE, nullable=False, server_default=text("'0.6'"))
     submit_type = Column(String(255, 'utf8mb4_unicode_ci'), nullable=False, server_default=text("'CODE'"))
     sample_code = Column(MEDIUMTEXT)
     category_id = Column(ForeignKey('problem_category.category_id'), nullable=False, index=True)
@@ -970,7 +970,18 @@ class Problem(Base):
         finally:
             sess.close()
 
-
+    @classmethod
+    def deleteRecord(cls, problem_id):
+        sess = Session()
+        try:
+            problem = sess.query(Problem).filter(cls.problem_id == problem_id).one()
+            sess.delete(problem)
+            sess.commit()
+        except:
+            sess.rollback()
+            raise
+        finally:
+            sess.close()
 class Role(Base):
     __tablename__ = 'role'
 
@@ -1362,6 +1373,8 @@ class ProblemCategorySchema(ModelSchema):
 
 
 class ProblemSchema(ModelSchema):
+    junit_rate = fields.String()
+    parser_rate = fields.String()
     category = Nested(ProblemCategorySchema)
 
     class Meta:
