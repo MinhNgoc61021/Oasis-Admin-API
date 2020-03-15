@@ -7,10 +7,8 @@ from flask import (
     jsonify
 )
 import re
-from db.oasis_entites import Student
-from db.oasis_entites import User
+from db.oasis_entites import Student, User, Semester, Course
 import pandas
-import io
 from openpyxl import load_workbook
 from datetime import datetime
 import json
@@ -62,60 +60,73 @@ def import_excel():
                 print(item)
                 print('\n')
             return jsonify({'status': 'success'}, excel_json), 200
-        else:  # xlsx file type
+
+        elif excel_file.content_type == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':  # xlsx file type
             data = load_workbook(request.files['student_list_excel'])
             sheet = data.active
             # get max row count
-            max_row = sheet.max_row
+            max_row = sheet.max_row + 1
             # get max column count
-            max_column = sheet.max_column
+            max_column = sheet.max_column + 1
+            semester = {
+                'Kỳ học': None
+            }
+            course = {
+                'Môn học': None,
+                'Lớp môn học': None,
+            }
+            for i in range(1, 11):
+                for j in range(1, max_column):
+                    if re.search("^(môn học)", str(sheet.cell(row=i, column=j).value).strip().lower()) is not None:
+                        course['Môn học'] = str(sheet.cell(row=i, column=j+2).value).strip()
+                    elif re.search("^(lớp môn học)", str(sheet.cell(row=i, column=j).value).strip().lower()) is not None:
+                        course['Lớp môn học'] = str(sheet.cell(row=i, column=j+2).value).strip().upper()
+                    elif i == 5 and j == 1:
+                        semester['Kỳ học'] = str(sheet.cell(row=i, column=j).value).strip()
+            print(semester)
+            print(Semester.searchSemesterRecord(semester['Kỳ học']))
+            print(course, flush=True)
+            print(Course.searchCourseRecord(course['Lớp môn học']), flush=True)
+            for i in range(12, max_row):
+                student = {
+                    'STT': None,
+                    'Mã SV': None,
+                    'Họ và tên': None,
+                    'Ngày sinh': None,
+                    'Lớp khóa học': None,
+                    'Ghi chú': None,
+                }
+                # Iterate over the dict and all the columns
+                for j, index in zip(range(1, max_column), student):
+                    # add data to excel_data dict
+                    student[index] = sheet.cell(row=i, column=j).value
+                print(student, flush=True)
 
-            print(max_row, flush=True)
-            print(max_column, flush=True)
-            for i in range(2, max_row + 1):
-                    excel_data = {
-                        'ID': None,
-                        'fullname': None,
-                        'dob': None,
-                        'gender': None,
-                        'courseID': None,
-                        'subjectID': None,
-                        'subjectTitle': None,
-                        'status': None,
-                    }
-                    # Iterate over the dict and all the columns
-                    for j, index in zip(range(1, max_column + 1), excel_data):
-                        # add data to excel_data dict
-                        excel_data[index] = sheet.cell(row=i, column=j).value
-                    print(excel_data, flush=True)
+                # add students to database
+                # check validation
+                # ID = re.search('^\d{8}$', str(excel_data['ID']).replace(' ', ''))
+                # fullname = re.search("^[a-zA-Z_ÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠàáâãèéêìíòóôõùúăđĩũơƯĂẠẢẤẦẨẪẬẮẰẲẴẶ" +
+                #                      "ẸẺẼỀẾỂưăạảấầẩẫậắằẳẵặẹẻẽềếểỄỆỈỊỌỎỐỒỔỖỘỚỜỞỠỢỤỦỨỪễệỉịọỏốồổỗộớờởỡợ" +
+                #                      "ụủứừỬỮỰỲỴÝỶỸửữựỳýỵỷỹ\s ]+$", str(excel_data['fullname']))
+                # dob = re.search('^(((0)[1-9])|((1)[0-2]))(\/)([0-2][0-9]|(3)[0-1])(\/)\d{4}',
+                #                 str(excel_data['dob'].strftime('%m/%d/%Y, %H:%M:%S')))
+                # gender = re.search('(Nam|Nữ)', str(excel_data['gender']))
+                # courseID = re.search('^[K|k][1-9][0-9][A-Za-z]+[1-9]*', str(excel_data['courseID']).replace(' ', ''))
+                # subjectID = re.search('(^(([A-Z]|[a-z]){3})([1-9][(0-9)]{3})$)',
+                #                       str(excel_data['subjectID']).replace(' ', ''))
+                # status = re.search('(đủ điều kiện|không đủ điều kiện)', excel_data['status'].lower())
+                # print(ID, flush=True)
+                # print(fullname, flush=True)
+                # print(dob, flush=True)
+                # print(gender, flush=True)
+                # print(courseID, flush=True)
+                # print(subjectID, flush=True)
+                # print(status, flush=True)
 
-                    # add students to database
-                    # check validation
-                    ID = re.search('^\d{8}$', str(excel_data['ID']).replace(' ', ''))
-                    fullname = re.search("^[a-zA-Z_ÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠàáâãèéêìíòóôõùúăđĩũơƯĂẠẢẤẦẨẪẬẮẰẲẴẶ" +
-                                         "ẸẺẼỀẾỂưăạảấầẩẫậắằẳẵặẹẻẽềếểỄỆỈỊỌỎỐỒỔỖỘỚỜỞỠỢỤỦỨỪễệỉịọỏốồổỗộớờởỡợ" +
-                                         "ụủứừỬỮỰỲỴÝỶỸửữựỳýỵỷỹ\s ]+$", str(excel_data['fullname']))
-                    dob = re.search('^(((0)[1-9])|((1)[0-2]))(\/)([0-2][0-9]|(3)[0-1])(\/)\d{4}',
-                                    str(excel_data['dob'].strftime('%m/%d/%Y, %H:%M:%S')))
-                    gender = re.search('(Nam|Nữ)', str(excel_data['gender']))
-                    courseID = re.search('^[K|k][1-9][0-9][A-Za-z]+[1-9]*', str(excel_data['courseID']).replace(' ', ''))
-                    subjectID = re.search('(^(([A-Z]|[a-z]){3})([1-9][(0-9)]{3})$)',
-                                          str(excel_data['subjectID']).replace(' ', ''))
-                    status = re.search('(đủ điều kiện|không đủ điều kiện)', excel_data['status'].lower())
-                    print(ID, flush=True)
-                    print(fullname, flush=True)
-                    print(dob, flush=True)
-                    print(gender, flush=True)
-                    print(courseID, flush=True)
-                    print(subjectID, flush=True)
-                    print(status, flush=True)
-
-                    if (ID is not None) and (fullname is not None) and (dob is not None) and (gender is not None) and (
-                            courseID is not None) and (subjectID is not None) and (status is not None):
-                        print('BEBE')
-                    else:
-                        return jsonify({'status': 'error', 'message': 'Du'}), 400
             return jsonify({'status': 'success'}), 200
+        else:
+            return jsonify(
+                {'status': 'bad-request', 'error_message': excel_file + ' không đúng định dạng xlsx hoặc xls'}), 400
     except Exception as e:
         return jsonify({'status': 'bad-request', 'error_message': e.__str__()}), 400
 

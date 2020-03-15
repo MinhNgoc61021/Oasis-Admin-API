@@ -1071,8 +1071,8 @@ class Semester(Base):
     def searchSemesterRecord(cls, name):
         sess = Session()
         try:
-            user = sess.query(Semester).filter(cls.name.like('%' + name + '%')).order_by(cls.name.asc())
-            return semester_schema.dump(user, many=True)
+            semester = sess.query(Semester).filter(cls.name.like('%' + name + '%')).order_by(cls.name.asc())
+            return semester_schema.dump(semester, many=True)
         except:
             sess.rollback()
             raise
