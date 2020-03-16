@@ -12,6 +12,7 @@ import pandas
 from openpyxl import load_workbook
 from datetime import datetime
 import json
+from ftfy import fix_encoding
 
 student = Blueprint('StudentManagement', __name__, url_prefix='/student')
 
@@ -84,7 +85,9 @@ def import_excel():
                     elif i == 5 and j == 1:
                         semester['Kỳ học'] = str(sheet.cell(row=i, column=j).value).strip()
             print(semester)
-            print(Semester.searchSemesterRecord(semester['Kỳ học']))
+            semester_title = str(semester['Kỳ học'].decode('ISO-8859-1'))
+            print(semester_title, flush=True)
+            print(Semester.searchSemesterRecord(semester_title))
             print(course, flush=True)
             print(Course.searchCourseRecord(course['Lớp môn học']), flush=True)
             for i in range(12, max_row):

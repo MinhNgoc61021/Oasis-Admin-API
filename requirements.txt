@@ -1,3 +1,4 @@
+ftfy
 flask
 flask_cors
 flask_bcrypt

@@ -154,20 +154,20 @@ class User(Base):
                      cls.is_lock: update_is_lock})
 
                 if update_permission == 'Sinh viên':
-                    role_id = 1
+                    role_id = sess.query(Role.role_id).filter(Role.code == 'STUDENT').one()
                     update_student_role = t_user_role.update().where(t_user_role.c.user_id == user_id).values(
                         {'role_id': role_id})
                     sess.execute(update_student_role)
 
                 elif update_permission == 'Giảng viên':
-                    role_id = 2
+                    role_id = sess.query(Role.role_id).filter(Role.code == 'LECTURE').one()
                     update_lecture_role = t_user_role.update().where(t_user_role.c.user_id == user_id).values(
                         {'role_id': role_id})
 
                     sess.execute(update_lecture_role)
 
                 else:
-                    role_id = 3
+                    role_id = sess.query(Role.role_id).filter(Role.code == 'ADMIN').one()
                     new_admin_role = t_user_role.update().where(t_user_role.c.user_id == user_id).values(
                         {'role_id': role_id})
                     sess.execute(new_admin_role)
@@ -185,6 +185,7 @@ class User(Base):
     @classmethod
     def createRecord(cls, username, name, email, create_at, permission, actived, is_lock, code, dob, class_course,
                      course_id):
+        Role.create()
         sess = Session()
         try:
             if sess.query(User).filter(
@@ -202,7 +203,7 @@ class User(Base):
                 sess.commit()
                 user_id = sess.query(User.user_id).filter(cls.username == username).one()
                 if permission == 'Sinh viên':
-                    role_id = 1
+                    role_id = sess.query(Role.role_id).filter(Role.code == 'STUDENT').one()
                     new_student_role = t_user_role.insert().values({'user_id': user_id[0],
                                                                     'role_id': role_id})
                     sess.execute(new_student_role)
@@ -225,14 +226,14 @@ class User(Base):
                         sess.add(new_student)
 
                 elif permission == 'Giảng viên':
-                    role_id = 2
+                    role_id = sess.query(Role.role_id).filter(Role.code == 'LECTURE').one()
                     new_lecture_role = t_user_role.insert().values({'user_id': user_id[0],
                                                                     'role_id': role_id})
                     sess.execute(new_lecture_role)
                     new_lecture = Lecture(user_id=user_id[0])
                     sess.add(new_lecture)
                 else:
-                    role_id = 3
+                    role_id = sess.query(Role.role_id).filter(Role.code == 'ADMIN').one()
                     new_admin_role = t_user_role.insert().values({'user_id': user_id[0],
                                                                   'role_id': role_id})
                     sess.execute(new_admin_role)
@@ -982,12 +983,36 @@ class Problem(Base):
             raise
         finally:
             sess.close()
+
+
 class Role(Base):
     __tablename__ = 'role'
 
     role_id = Column(INTEGER(11), primary_key=True)
     code = Column(String(255), nullable=False)
     name = Column(String(255), nullable=False)
+
+    @classmethod
+    def create(cls):
+        sess = Session()
+        try:
+            if sess.query(Role).filter(cls.code == 'STUDENT').scalar() is None:
+                student_role = Role(code='STUDENT', name='Sinh vien')
+                sess.add(student_role)
+                sess.commit()
+            if sess.query(Role).filter(cls.code == 'LECTURE').scalar() is None:
+                lecturer_role = Role(code='LECTURE', name='Giang vien')
+                sess.add(lecturer_role)
+                sess.commit()
+            if sess.query(Role).filter(cls.code == 'ADMIN').scalar() is None:
+                admin_role = Role(code='ADMIN', name='Admin')
+                sess.add(admin_role)
+                sess.commit()
+        except:
+            sess.rollback()
+            raise
+        finally:
+            sess.close()
 
     @classmethod
     def getRecord(cls, user_id):
