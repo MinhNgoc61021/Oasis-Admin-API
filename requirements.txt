@@ -1,4 +1,3 @@
-ftfy
 flask
 flask_cors
 flask_bcrypt
@@ -15,3 +14,4 @@ marshmallow-sqlalchemy
 sqlalchemy-filters
 sqlalchemy
 pytz
+ftfy
