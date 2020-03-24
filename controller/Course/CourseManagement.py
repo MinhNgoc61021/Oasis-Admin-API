@@ -45,7 +45,7 @@ def update_record():
         print('BEBE')
         print(new_update)
         Course.updateRecord(course_id, str(update_code).strip(), str(update_name).strip(),
-                            str(update_description).strip(), updated_at)
+                            str(update_description).strip(), updated_at, '')
         return jsonify({'status': 'success'}), 200
     except Exception as e:
         return jsonify({'status': 'bad-request', 'error_message': e.__str__()}), 400

@@ -558,18 +558,26 @@ class Course(Base):
             sess.close()
 
     @classmethod
-    def updateRecord(cls, course_id, update_code, update_name, update_description, update_at):
+    def updateRecord(cls, course_id, update_code, update_name, update_description, update_at, semester_id):
         sess = Session()
         try:
             # A dictionary of key - values with key being the attribute to be updated, and value being the new
             # contents of attribute
-
-            sess.query(Course).filter(cls.course_id == course_id).update(
-                {cls.name: update_name,
-                 cls.code: update_code,
-                 cls.description: update_description,
-                 cls.updated_at: update_at})
-            sess.commit()
+            if semester_id == '':
+                sess.query(Course).filter(cls.course_id == course_id).update(
+                    {cls.name: update_name,
+                     cls.code: update_code,
+                     cls.description: update_description,
+                     cls.updated_at: update_at})
+                sess.commit()
+            else:
+                sess.query(Course).filter(cls.course_id == course_id).update(
+                    {cls.name: update_name,
+                     cls.code: update_code,
+                     cls.description: update_description,
+                     cls.updated_at: update_at,
+                     cls.semester_id: semester_id})
+                sess.commit()
         except:
             sess.rollback()
             raise
