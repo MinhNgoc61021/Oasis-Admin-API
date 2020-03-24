@@ -163,7 +163,6 @@ class User(Base):
                     role_id = sess.query(Role.role_id).filter(Role.code == 'LECTURE').one()
                     update_lecture_role = t_user_role.update().where(t_user_role.c.user_id == user_id).values(
                         {'role_id': role_id})
-
                     sess.execute(update_lecture_role)
 
                 else:
