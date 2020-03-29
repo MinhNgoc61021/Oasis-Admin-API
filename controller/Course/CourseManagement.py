@@ -42,10 +42,16 @@ def update_record():
         update_name = new_update.get('update_name')
         update_description = new_update.get('update_description')
         updated_at = datetime.now(pytz.timezone('Asia/Ho_Chi_Minh')).strftime("%Y-%m-%d %H:%M:%S")
-        print(new_update)
-        Course.updateRecord(course_id, str(update_code).strip(), str(update_name).strip(),
-                            str(update_description).strip(), updated_at, '')
-        return jsonify({'status': 'success'}), 200
+
+        if new_update.get('semester_id') is None:
+            Course.updateRecord(course_id, str(update_code).strip(), str(update_name).strip(),
+                                str(update_description).strip(), updated_at, '')
+            return jsonify({'status': 'success'}), 200
+        else:
+            Course.updateRecord(course_id, str(update_code).strip(), str(update_name).strip(),
+                                str(update_description).strip(), updated_at, new_update.get('semester_id'))
+            return jsonify({'status': 'success'}), 200
+
     except Exception as e:
         return jsonify({'status': 'bad-request', 'error_message': e.__str__()}), 400
 
