@@ -42,7 +42,6 @@ def update_record():
         update_name = new_update.get('update_name')
         update_description = new_update.get('update_description')
         updated_at = datetime.now(pytz.timezone('Asia/Ho_Chi_Minh')).strftime("%Y-%m-%d %H:%M:%S")
-        print('BEBE')
         print(new_update)
         Course.updateRecord(course_id, str(update_code).strip(), str(update_name).strip(),
                             str(update_description).strip(), updated_at, '')
@@ -60,6 +59,20 @@ def search_record():
         return jsonify({
             'status': 'success',
             'search_results': searchRecord,
+        }), 200
+    except Exception as e:
+        return jsonify({'status': 'bad-request', 'error_message': e.__str__()}), 400
+
+
+@course.route('/existent-course', methods=['GET'])
+def search_existent_course():
+    try:
+        searchCode = request.args.get('searchCode')
+        searchRecord = Course.searchCourseExistence(str(searchCode))
+
+        return jsonify({
+            'status': 'success',
+            'search_result': searchRecord,
         }), 200
     except Exception as e:
         return jsonify({'status': 'bad-request', 'error_message': e.__str__()}), 400

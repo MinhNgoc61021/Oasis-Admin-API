@@ -6,7 +6,7 @@ from flask import (
     request,
     jsonify
 )
-from db.oasis_entites import Problem, ProblemCategory
+from db.oasis_entites import Problem
 from datetime import datetime
 
 problem = Blueprint('ProblemManagement', __name__, url_prefix='/problem')
@@ -66,6 +66,51 @@ def create():
     except Exception as e:
         return jsonify({'status': 'bad-request', 'error_message': e.__str__()}), 400
 
+
+@problem.route('/update-record', methods=['PUT'])
+def update_record():
+    try:
+        update_problem = request.get_json()
+        problem_id = update_problem.get('problem_id')
+        update_title = update_problem.get('update_title')
+        update_problem_statement = update_problem.get('update_problem_statement')
+        update_input_format = update_problem.get('update_input_format')
+        update_constraints = update_problem.get('update_constraints')
+        update_output_format = update_problem.get('update_output_format')
+        update_junit_rate = update_problem.get('update_junit_rate')
+        update_mark_io = update_problem.get('update_mark_io')
+        update_mark_junit = update_problem.get('update_mark_junit')
+        update_level = update_problem.get('update_level')
+        update_point = update_problem.get('update_point')
+        update_submit_type = update_problem.get('update_submit_type')
+        update_sample_code = update_problem.get('update_sample_code')
+        update_category_id = update_problem.get('update_category_id')
+        updated_at = datetime.now(pytz.timezone('Asia/Ho_Chi_Minh')).strftime("%Y-%m-%d %H:%M:%S")
+        update_mark_parser = update_problem.get('update_mark_parser')
+        update_parser_rate = update_problem.get('update_parser_rate')
+        isUpdated = Problem.updateRecord(problem_id,
+                             str(update_title).strip(),
+                             str(update_problem_statement).strip(),
+                             str(update_input_format).strip(),
+                             str(update_constraints).strip(),
+                             str(update_output_format).strip(),
+                             float(update_junit_rate),
+                             update_mark_io,
+                             int(update_mark_junit),
+                             int(update_level),
+                             int(update_point),
+                             str(update_submit_type).strip(),
+                             str(update_sample_code).strip(),
+                             int(update_mark_parser),
+                             float(update_parser_rate),
+                             updated_at,
+                             update_category_id)
+        if isUpdated is True:
+            return jsonify({'status': 'success'}), 200
+        else:
+            return jsonify({'status': 'already-exist'}), 202
+    except Exception as e:
+        return jsonify({'status': 'bad-request', 'error_message': e.__str__()}), 400
 
 @problem.route('/delete-record', methods=['DELETE'])
 def delete():

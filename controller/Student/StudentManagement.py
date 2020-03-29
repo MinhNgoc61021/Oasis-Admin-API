@@ -96,8 +96,6 @@ def import_excel():
             if semester == []:
                 Semester.createRecord(semester_title)
                 semester_id = Semester.searchSemesterRecord(semester_title)[0]['semester_id']
-                print('NENE', flush=True)
-                print(semester_id, flush=True)
                 search_course = Course.searchCourseRecord(course['Mã lớp môn học'])
                 if search_course == []:
                     Course.createRecord(course['Mã lớp môn học'], course['Môn học'], '', int(semester_id))
@@ -174,6 +172,7 @@ def import_excel():
                         if isStudentCreated is True:
                             new_students.append(student)
                         else:
+
                             update_students.append(student)
                     else:
                         error_students.append(student)

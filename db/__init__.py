@@ -29,5 +29,4 @@ Session.configure(bind=engine)
 
 def init_db():
     from db.oasis_entites import User, Problem, ProblemCategory, Admin, Student, Role, Lecture, CourseProblem, Submission, SubmissionDetail, ZipSubmissionResult, UserFacebook, Testcase
-
     Base.metadata.create_all(bind=engine)

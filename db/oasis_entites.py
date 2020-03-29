@@ -597,6 +597,18 @@ class Course(Base):
             sess.close()
 
     @classmethod
+    def searchCourseExistence(cls, code):
+        sess = Session()
+        try:
+            course = sess.query(Course).filter(cls.code == code).scalar()
+            return course_schema.dump(course)
+        except:
+            sess.rollback()
+            raise
+        finally:
+            sess.close()
+
+    @classmethod
     def getStudentCourse(cls, student_id):
         sess = Session()
         try:
@@ -938,6 +950,44 @@ class Problem(Base):
                                       sample_code=sample_code,
                                       category_id=category_id)
                 sess.add(new_problem)
+                sess.commit()
+                return True
+            else:
+                return False
+        except:
+            sess.rollback()
+            raise
+        finally:
+            sess.close()
+
+    @classmethod
+    def updateRecord(cls, problem_id, title, problem_statement, input_format, constraints, output_format, junit_rate,
+                     mark_io, mark_junit, level, point, submit_type, sample_code, mark_parser, parser_rate,
+                     updated_at, category_id):
+        sess = Session()
+        try:
+            # A dictionary of key - values with key being the attribute to be updated, and value being the new
+            # contents of attribute
+            if sess.query(Problem).filter(
+                    cls.title == title, cls.problem_id != problem_id
+            ).scalar() is None:
+                sess.query(Problem).filter(cls.problem_id == problem_id).update(
+                    {cls.title: title,
+                     cls.problem_statement: problem_statement,
+                     cls.input_format: input_format,
+                     cls.constraints: constraints,
+                     cls.output_format: output_format,
+                     cls.junit_rate: junit_rate,
+                     cls.mark_io: mark_io,
+                     cls.mark_junit: mark_junit,
+                     cls.level: level,
+                     cls.point: point,
+                     cls.submit_type: submit_type,
+                     cls.sample_code: sample_code,
+                     cls.mark_parser: mark_parser,
+                     cls.parser_rate: parser_rate,
+                     cls.updated_at: updated_at,
+                     cls.category_id: category_id})
                 sess.commit()
                 return True
             else:
@@ -1371,7 +1421,7 @@ class CourseSchema(ModelSchema):
 
 
 course_schema = CourseSchema(
-    only=['course_id', 'code', 'name', 'description'])
+    only=['course_id', 'code', 'name', 'description', 'semester'])
 
 
 # marshmallow schema for each entity for JSON deserialize
