@@ -106,6 +106,19 @@ def get_records():
         return jsonify({'status': 'bad-request', 'error_message': e.__str__()}), 400
 
 
+@course.route('/all-records', methods=['GET'])
+def get_all():
+    try:
+        records = Course.getAllRecord()
+
+        return jsonify({
+            'status': 'success',
+            'records': records,
+        }), 200
+    except Exception as e:
+        return jsonify({'status': 'bad-request', 'error_message': e.__str__()}), 400
+
+
 @course.route('/student-course', methods=['GET'])
 def get_student_course():
     try:
@@ -120,8 +133,8 @@ def get_student_course():
 def delete():
     try:
         delCourse = request.get_json()
-        semester_id = delCourse.get('delCourseID')
-        Course.deleteRecord(semester_id)
+        course_id = delCourse.get('delCourseID')
+        Course.deleteRecord(course_id)
 
         return jsonify({'status': 'success'}), 200
     except Exception as e:

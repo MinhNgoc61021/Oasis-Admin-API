@@ -626,6 +626,18 @@ class Course(Base):
             sess.close()
 
     @classmethod
+    def getAllRecord(cls):
+        sess = Session()
+        try:
+            course = sess.query(Course).all()
+            return course_schema.dump(course, many=True)
+        except:
+            sess.rollback()
+            raise
+        finally:
+            sess.close()
+
+    @classmethod
     def deleteRecord(cls, course_id):
         sess = Session()
         try:
