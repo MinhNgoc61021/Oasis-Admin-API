@@ -48,103 +48,102 @@ def create():
 
 @student.route('/import-excel', methods=['POST'])
 def import_excel():
+    excel_file = request.files['student_list_excel']
+    new_students = []
+    update_students = []
+    error_students = []
+    course_id = request.form.get('course_id')
+    if excel_file.content_type == 'application/vnd.ms-excel':  # xls file type
+        # load data
+        data = pandas.read_excel(request.files['student_list_excel'], encoding='ISO-8859-1')
 
-    try:
-        excel_file = request.files['student_list_excel']
-        new_students = []
-        update_students = []
-        error_students = []
-        course_id = request.form.get('course_id')
-        if excel_file.content_type == 'application/vnd.ms-excel':  # xls file type
-            # load data
-            data = pandas.read_excel(request.files['student_list_excel'], encoding='ISO-8859-1')
+        processed_data = json.dumps(data, ensure_ascii=False)
 
-            processed_data = json.dumps(data, ensure_ascii=False)
+        excel_json = json.loads(processed_data)
+        for item in excel_json['DSLMH']:
+            print(item)
+            print('\n')
+        return jsonify({'status': 'success'}, excel_json), 200
+    elif excel_file.content_type == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':  # xlsx file type
+        data = load_workbook(excel_file)
 
-            excel_json = json.loads(processed_data)
-            for item in excel_json['DSLMH']:
-                print(item)
-                print('\n')
-            return jsonify({'status': 'success'}, excel_json), 200
-        elif excel_file.content_type == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':  # xlsx file type
-            data = load_workbook(request.files['student_list_excel'])
+        sheet = data.active
+        # get max row count
+        max_row = sheet.max_row + 1
+        # get max column count
+        max_column = sheet.max_column + 1
+        print('BEBE')
+        for i in range(12, max_row):
+            student = {
+                'STT': None,
+                'Mã SV': None,
+                'Họ và tên': None,
+                'Ngày sinh': None,
+                'Lớp khóa học': None,
+                'Ghi chú': None,
+            }
+            # Iterate over the dict and all the columns
+            for j, index in zip(range(1, max_column), student):
+                # add data to excel_data dict
+                student[index] = sheet.cell(row=i, column=j).value
+            print(student, flush=True)
+            # add students to database
+            # check validation
+            if student['STT'] is not None and student['Mã SV'] is not None:
+                check_code = re.search('^\d{8}$', str(student['Mã SV']).replace(' ', ''))
+                check_name = re.search("^[a-zA-Z_ÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠàáâãèéêìíòóôõùúăđĩũơƯĂẠẢẤẦẨẪẬẮẰẲẴẶ" +
+                                       "ẸẺẼỀẾỂưăạảấầẩẫậắằẳẵặẹẻẽềếểỄỆỈỊỌỎỐỒỔỖỘỚỜỞỠỢỤỦỨỪễệỉịọỏốồổỗộớờởỡợ" +
+                                       "ụủứừỬỮỰỲỴÝỶỸửữựỳýỵỷỹ\s ]+$", str(student['Họ và tên']))
+                check_dob = re.search('^(((0)[1-9])|((1)[0-2]))(\/)([0-2][0-9]|(3)[0-1])(\/)\d{4}',
+                                      str(datetime.strptime(student['Ngày sinh'], '%d/%m/%Y').strftime('%m/%d/%Y')))
+                # gender = re.search('(Nam|Nữ)', str(excel_data['gender']))
+                # courseID = re.search('^[K|k][1-9][0-9][A-Za-z]+[1-9]*', str(excel_data['courseID']).replace(' ', ''))
+                # subjectID = re.search('(^(([A-Z]|[a-z]){3})([1-9][(0-9)]{3})$)',
+                #                       str(excel_data['subjectID']).replace(' ', ''))
+                # status = re.search('(đủ điều kiện|không đủ điều kiện)', excel_data['status'].lower())
+                print(check_code, flush=True)
+                print(check_name, flush=True)
+                print(check_dob, flush=True)
+                # print(gender, flush=True)
+                # print(courseID, flush=True)
+                # print(subjectID, flush=True)
+                # print(status, flush=True)
 
-            sheet = data.active
-            # get max row count
-            max_row = sheet.max_row + 1
-            # get max column count
-            max_column = sheet.max_column + 1
-            print('BEBE')
-            print(request.get_json('course_id'))
-            for i in range(12, max_row):
-                student = {
-                    'STT': None,
-                    'Mã SV': None,
-                    'Họ và tên': None,
-                    'Ngày sinh': None,
-                    'Lớp khóa học': None,
-                    'Ghi chú': None,
-                }
-                # Iterate over the dict and all the columns
-                for j, index in zip(range(1, max_column), student):
-                    # add data to excel_data dict
-                    student[index] = sheet.cell(row=i, column=j).value
-                print(student, flush=True)
-                # add students to database
-                # check validation
-                if student['STT'] is not None and student['Mã SV'] is not None:
-                    check_code = re.search('^\d{8}$', str(student['Mã SV']).replace(' ', ''))
-                    check_name = re.search("^[a-zA-Z_ÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠàáâãèéêìíòóôõùúăđĩũơƯĂẠẢẤẦẨẪẬẮẰẲẴẶ" +
-                                           "ẸẺẼỀẾỂưăạảấầẩẫậắằẳẵặẹẻẽềếểỄỆỈỊỌỎỐỒỔỖỘỚỜỞỠỢỤỦỨỪễệỉịọỏốồổỗộớờởỡợ" +
-                                           "ụủứừỬỮỰỲỴÝỶỸửữựỳýỵỷỹ\s ]+$", str(student['Họ và tên']))
-                    check_dob = re.search('^(((0)[1-9])|((1)[0-2]))(\/)([0-2][0-9]|(3)[0-1])(\/)\d{4}',
-                                          str(datetime.strptime(student['Ngày sinh'], '%d/%m/%Y').strftime('%m/%d/%Y')))
-                    # gender = re.search('(Nam|Nữ)', str(excel_data['gender']))
-                    # courseID = re.search('^[K|k][1-9][0-9][A-Za-z]+[1-9]*', str(excel_data['courseID']).replace(' ', ''))
-                    # subjectID = re.search('(^(([A-Z]|[a-z]){3})([1-9][(0-9)]{3})$)',
-                    #                       str(excel_data['subjectID']).replace(' ', ''))
-                    # status = re.search('(đủ điều kiện|không đủ điều kiện)', excel_data['status'].lower())
-                    print(check_code, flush=True)
-                    print(check_name, flush=True)
-                    print(check_dob, flush=True)
-                    # print(gender, flush=True)
-                    # print(courseID, flush=True)
-                    # print(subjectID, flush=True)
-                    # print(status, flush=True)
-
-                    if (check_code is not None) and (check_name is not None) and (check_dob is not None):
-                        isStudentCreated = User.createRecord(str(student['Mã SV']).strip(), str(student['Họ và tên']).strip(),
-                                                             str(student['Mã SV']) + '@vnu.edu.vn',
-                                                             datetime.now(pytz.timezone('Asia/Ho_Chi_Minh')).strftime(
-                                                                 "%Y-%m-%d %H:%M:%S"),
-                                                             'Sinh viên', 1, 0, str(student['Mã SV']).strip(),
-                                                             student['Ngày sinh'],
-                                                             str(student['Lớp khóa học']).strip(),
-                                                             course_id)
-                        if isStudentCreated is True:
-                            new_students.append(student)
-                        else:
-                            current_student = Student.searchStudentRecord(check_code)['user']['user_id']
-                            Student.updateRecord(current_student['user']['user_id'], current_student['student_id'], str(student['Mã SV']).strip(), str(student['Mã SV']).strip(), str(student['Họ và tên']).strip(),
-                                         str(student['Mã SV']) + '@vnu.edu.vn', student['Ngày sinh'],
-                                         str(student['Lớp khóa học']).strip(), course_id, datetime.now(pytz.timezone('Asia/Ho_Chi_Minh')).strftime(
-                                                                 "%Y-%m-%d %H:%M:%S"), 1,
-                                         0)
-
-                            update_students.append(student)
+                if (check_code is not None) and (check_name is not None) and (check_dob is not None):
+                    isStudentCreated = User.createRecord(str(student['Mã SV']).strip(),
+                                                         str(student['Họ và tên']).strip(),
+                                                         str(student['Mã SV']) + '@vnu.edu.vn',
+                                                         datetime.now(pytz.timezone('Asia/Ho_Chi_Minh')).strftime(
+                                                             "%Y-%m-%d %H:%M:%S"),
+                                                         'Sinh viên', 1, 0, str(student['Mã SV']).strip(),
+                                                         datetime.strptime(student['Ngày sinh'], '%d/%m/%Y').strftime("%Y-%m-%d %H:%M:%S"),
+                                                         str(student['Lớp khóa học']).strip(),
+                                                         course_id)
+                    if isStudentCreated is True:
+                        new_students.append(student)
                     else:
-                        error_students.append(student)
+                        current_student = Student.searchStudentRecord(str(student['Mã SV']).strip())[0]
+                        Student.updateRecord(current_student['user']['user_id'], current_student['student_id'],
+                                             str(student['Mã SV']).strip(), str(student['Mã SV']).strip(),
+                                             str(student['Họ và tên']).strip(),
+                                             str(student['Mã SV']) + '@vnu.edu.vn', datetime.strptime(student['Ngày sinh'], '%d/%m/%Y').strftime("%Y-%m-%d %H:%M:%S"),
+                                             str(student['Lớp khóa học']).strip(), course_id,
+                                             datetime.now(pytz.timezone('Asia/Ho_Chi_Minh')).strftime(
+                                                 "%Y-%m-%d %H:%M:%S"), 1,
+                                             0)
 
-            return jsonify({'status': 'success',
-                            'new_students': new_students,
-                            'error_students': error_students,
-                            'updated_students': update_students,
-                            }), 200
-        else:
-            return jsonify(
-                {'status': 'bad-request', 'error_message': excel_file + ' không đúng định dạng xlsx hoặc xls'}), 400
-    except Exception as e:
-        return jsonify({'status': 'bad-request', 'error_message': e.__str__()}), 400
+                        update_students.append(student)
+                else:
+                    error_students.append(student)
+
+        return jsonify({'status': 'success',
+                        'new_students': new_students,
+                        'error_students': error_students,
+                        'updated_students': update_students,
+                        }), 200
+    else:
+        return jsonify(
+            {'status': 'bad-request', 'error_message': excel_file + ' không đúng định dạng xlsx hoặc xls'}), 400
 
 
 @student.route('/records', methods=['GET'])
