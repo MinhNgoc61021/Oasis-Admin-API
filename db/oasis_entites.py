@@ -123,6 +123,43 @@ class User(Base):
             sess.close()
 
     @classmethod
+    def getUser(cls, username):
+        sess = Session()
+        try:
+            user = sess.query(User).filter(cls.username == username).scalar()
+            return user_schema.dump(user)
+        except:
+            sess.rollback()
+            raise
+        finally:
+            sess.close()
+
+    @classmethod
+    def checkUser(cls, username, password):
+        sess = Session()
+        try:
+            check = sess.query(User).filter(User.username == str(username)).scalar()
+            if check is not None:
+                if check_password_hash(check.password, str(password)) is True:
+                    stmt = select([t_user_role]).where(t_user_role.c.user_id == check.user_id)
+                    roleType = sess.execute(stmt)
+                    if roleType[1] == 1:
+                        return user_schema.dump(check), 'Student'
+                    elif roleType[1] == 2:
+                        return user_schema.dump(check), 'Lecture'
+                    elif roleType[1] == 3:
+                        return user_schema.dump(check), 'Admin'
+                else:
+                    return 'Not found'
+            else:
+                return 'Not found'
+        except:
+            sess.rollback()
+            raise
+        finally:
+            sess.close()
+
+    @classmethod
     def searchUserRecord(cls, username):
         sess = Session()
         try:
