@@ -144,7 +144,7 @@ class User(Base):
                     stmt = select([t_user_role]).where(t_user_role.c.user_id == check.user_id)
                     roleType = sess.execute(stmt).first()
                     if roleType[1] == 1:
-                        return user_schema.dump(check), 'Student'
+                        return 'Student'
                     elif roleType[1] == 2:
                         return user_schema.dump(check), 'Lecture'
                     elif roleType[1] == 3:

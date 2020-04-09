@@ -65,11 +65,13 @@ def signIn():
         check_user = User.checkUser(username, password)
         if check_user == 'Not found':
             return jsonify({'message': 'not found'}), 401
+        elif check_user == 'Student':
+            return jsonify({'message': 'student-unauthorized'}), 401
         else:
             token = jwt.encode({
                 'sub': username,  # representing username
                 'iat': datetime.utcnow(),  # issued at timestamp in seconds
-                'exp': datetime.utcnow() + timedelta(minutes=120)},
+                'exp': 'none'},
                 # the time in which the token will expire as seconds
                 current_app.config['SECRET_KEY'])
             return jsonify({'type': check_user[1],
