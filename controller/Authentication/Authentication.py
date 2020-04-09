@@ -52,3 +52,28 @@ def token_required(f):
             return jsonify(invalid_msg), 401
 
     return _verify
+
+
+@authentication.route('/sign-in', methods=['POST'])
+def signIn():
+    user_form = request.get_json()
+    username = user_form.get('username')
+    check_username = re.search('[!#$%^&*()='',?";:{}|<>]', username)
+    password = user_form.get('password')
+    check_password = re.search('[!#$%^&*()='',?";:{}|<>]', username)
+    if (check_username is None) and (check_password is None):
+        check_user = User.checkUser(username, password)
+        if check_user == 'Not found':
+            return jsonify({'message': 'not found'}), 401
+        else:
+            token = jwt.encode({
+                'sub': username,  # representing username
+                'iat': datetime.utcnow(),  # issued at timestamp in seconds
+                'exp': datetime.utcnow() + timedelta(minutes=120)},
+                # the time in which the token will expire as seconds
+                current_app.config['SECRET_KEY'])
+            return jsonify({'type': check_user[1],
+                            'message': 'login successful',
+                            'token': token.decode('UTF-8')}), 200
+    else:
+        return jsonify({'message': 'unauthorized'}), 401

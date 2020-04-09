@@ -142,7 +142,7 @@ class User(Base):
             if check is not None:
                 if check_password_hash(check.password, str(password)) is True:
                     stmt = select([t_user_role]).where(t_user_role.c.user_id == check.user_id)
-                    roleType = sess.execute(stmt)
+                    roleType = sess.execute(stmt).first()
                     if roleType[1] == 1:
                         return user_schema.dump(check), 'Student'
                     elif roleType[1] == 2:
