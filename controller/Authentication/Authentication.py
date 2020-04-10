@@ -40,11 +40,11 @@ def token_required(f):
         try:
             token = auth_headers[1]
             data = jwt.decode(token, current_app.config['SECRET_KEY'])
-            check_user_jwt = User.getUser(data['sub'])
-            if check_user_jwt is None:
+            user_data = User.getUser(data['sub'])
+            if user_data is None:
                 raise RuntimeError('User not found')
-            print(check_user_jwt, flush=True)
-            return f(check_user_jwt, *args, **kwargs)
+            print(user_data, flush=True)
+            return f(user_data, *args, **kwargs)
         except jwt.ExpiredSignatureError:
             return jsonify(expired_msg), 401  # 401 is Unauthorized HTTP status code
         except (jwt.InvalidTokenError, Exception) as e:
@@ -55,7 +55,7 @@ def token_required(f):
 
 
 @authentication.route('/sign-in', methods=['POST'])
-def signIn():
+def sign_in():
     user_form = request.get_json()
     username = user_form.get('username')
     check_username = re.search('[!#$%^&*()='',?";:{}|<>]', username)
@@ -71,7 +71,7 @@ def signIn():
             token = jwt.encode({
                 'sub': username,  # representing username
                 'iat': datetime.utcnow(),  # issued at timestamp in seconds
-                'exp': 'none'},
+                'exp': datetime.utcnow() + timedelta(minutes=480)},
                 # the time in which the token will expire as seconds
                 current_app.config['SECRET_KEY'])
             return jsonify({'type': check_user[1],
@@ -79,3 +79,9 @@ def signIn():
                             'token': token.decode('UTF-8')}), 200
     else:
         return jsonify({'message': 'unauthorized'}), 401
+
+
+@authentication.route('/get-personal-data', methods=['GET'])
+@token_required
+def get_data(data):
+    return jsonify({'user_data': data}), 200
