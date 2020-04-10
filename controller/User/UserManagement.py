@@ -6,6 +6,8 @@ from flask import (
     request,
     jsonify
 )
+
+from controller.Authentication.Authentication import token_required
 from db.oasis_entites import User
 from db.oasis_entites import Role
 from datetime import datetime
@@ -14,7 +16,8 @@ user = Blueprint('UserManagement', __name__, url_prefix='/user')
 
 
 @user.route('/records', methods=['GET'])
-def get_records():
+@token_required
+def get_records(e):
     try:
         page_index = request.args.get('page_index')
         per_page = request.args.get('per_page')
@@ -35,7 +38,8 @@ def get_records():
 
 
 @user.route('/search', methods=['GET'])
-def search_record():
+@token_required
+def search_record(e):
     try:
         searchUsername = request.args.get('searchUsername')
         searchRecord = User.searchUserRecord(str(searchUsername))
@@ -49,7 +53,8 @@ def search_record():
 
 
 @user.route('/create-record', methods=['POST'])
-def create():
+@token_required
+def create(e):
     try:
         new_user = request.get_json()
         username = new_user.get('new_username')
@@ -71,7 +76,8 @@ def create():
 
 
 @user.route('/update-record', methods=['PUT'])
-def update_record():
+@token_required
+def update_record(e):
     try:
         new_update = request.get_json()
         user_id = new_update.get('user_id')
@@ -94,7 +100,8 @@ def update_record():
 
 
 @user.route('/delete-record', methods=['DELETE'])
-def delete():
+@token_required
+def delete(e):
     try:
         delUser = request.get_json()
         user_id = delUser.get('delUserID')
@@ -106,7 +113,8 @@ def delete():
 
 
 @user.route('/user-role', methods=['GET'])
-def getRole():
+@token_required
+def getRole(e):
     try:
         user_id = request.args.get('user_id')
         return jsonify({'status': 'success', 'role_id': Role.getRecord(user_id)}), 200

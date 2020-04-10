@@ -6,6 +6,8 @@ from flask import (
     request,
     jsonify
 )
+
+from controller.Authentication.Authentication import token_required
 from db.oasis_entites import Problem
 from datetime import datetime
 
@@ -13,7 +15,8 @@ problem = Blueprint('ProblemManagement', __name__, url_prefix='/problem')
 
 
 @problem.route('/records', methods=['GET'])
-def get_records():
+@token_required
+def get_records(e):
     try:
         page_index = request.args.get('page_index')
         per_page = request.args.get('per_page')
@@ -34,7 +37,8 @@ def get_records():
 
 
 @problem.route('/create-record', methods=['POST'])
-def create():
+@token_required
+def create(e):
     try:
         new_problem = request.get_json()
         title = new_problem.get('new_title')
@@ -68,7 +72,8 @@ def create():
 
 
 @problem.route('/update-record', methods=['PUT'])
-def update_record():
+@token_required
+def update_record(e):
     try:
         update_problem = request.get_json()
         problem_id = update_problem.get('problem_id')
@@ -89,22 +94,22 @@ def update_record():
         update_mark_parser = update_problem.get('update_mark_parser')
         update_parser_rate = update_problem.get('update_parser_rate')
         isUpdated = Problem.updateRecord(problem_id,
-                             str(update_title).strip(),
-                             str(update_problem_statement).strip(),
-                             str(update_input_format).strip(),
-                             str(update_constraints).strip(),
-                             str(update_output_format).strip(),
-                             float(update_junit_rate),
-                             update_mark_io,
-                             int(update_mark_junit),
-                             int(update_level),
-                             int(update_point),
-                             str(update_submit_type).strip(),
-                             str(update_sample_code).strip(),
-                             int(update_mark_parser),
-                             float(update_parser_rate),
-                             updated_at,
-                             update_category_id)
+                                         str(update_title).strip(),
+                                         str(update_problem_statement).strip(),
+                                         str(update_input_format).strip(),
+                                         str(update_constraints).strip(),
+                                         str(update_output_format).strip(),
+                                         float(update_junit_rate),
+                                         update_mark_io,
+                                         int(update_mark_junit),
+                                         int(update_level),
+                                         int(update_point),
+                                         str(update_submit_type).strip(),
+                                         str(update_sample_code).strip(),
+                                         int(update_mark_parser),
+                                         float(update_parser_rate),
+                                         updated_at,
+                                         update_category_id)
         if isUpdated is True:
             return jsonify({'status': 'success'}), 200
         else:
@@ -112,8 +117,10 @@ def update_record():
     except Exception as e:
         return jsonify({'status': 'bad-request', 'error_message': e.__str__()}), 400
 
+
 @problem.route('/delete-record', methods=['DELETE'])
-def delete():
+@token_required
+def delete(e):
     try:
         delProblem = request.get_json()
         problem_id = delProblem.get('delProblemID')

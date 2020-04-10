@@ -13,13 +13,15 @@ from flask import (
 )
 from openpyxl import load_workbook
 
+from controller.Authentication.Authentication import token_required
 from db.oasis_entites import Student, User, Semester, Course
 
 student = Blueprint('StudentManagement', __name__, url_prefix='/student')
 
 
 @student.route('/create-record', methods=['POST'])
-def create():
+@token_required
+def create(e):
     try:
         new_student = request.get_json()
         code = new_student.get('new_code')
@@ -47,7 +49,8 @@ def create():
 
 
 @student.route('/import-excel', methods=['POST'])
-def import_excel():
+@token_required
+def import_excel(e):
     excel_file = request.files['student_list_excel']
     new_students = []
     update_students = []
@@ -150,7 +153,8 @@ def import_excel():
 
 
 @student.route('/records', methods=['GET'])
-def get_records():
+@token_required
+def get_records(e):
     try:
         page_index = request.args.get('page_index')
         per_page = request.args.get('per_page')
@@ -171,7 +175,8 @@ def get_records():
 
 
 @student.route('/records-by-course', methods=['GET'])
-def get_records_by_course():
+@token_required
+def get_records_by_course(e):
     try:
         course_id = request.args.get('course_id')
         page_index = request.args.get('page_index')
@@ -193,7 +198,8 @@ def get_records_by_course():
 
 
 @student.route('/search', methods=['GET'])
-def search_record():
+@token_required
+def search_record(e):
     try:
         searchCode = request.args.get('searchCode')
         searchRecord = Student.searchStudentRecord(str(searchCode))
@@ -207,7 +213,8 @@ def search_record():
 
 
 @student.route('/search-from-course', methods=['GET'])
-def search_record_from_course():
+@token_required
+def search_record_from_course(e):
     try:
         course_id = request.args.get('course_id')
         searchCode = request.args.get('searchCode')
@@ -222,7 +229,8 @@ def search_record_from_course():
 
 
 @student.route('/search-from-course-existence', methods=['GET'])
-def search_from_course_existence():
+@token_required
+def search_from_course_existence(e):
     try:
         searchCode = request.args.get('searchCode')
         searchRecord = Student.searchStudentFromCourseExistence(str(searchCode))
@@ -236,7 +244,8 @@ def search_from_course_existence():
 
 
 @student.route('/update-record', methods=['PUT'])
-def update_record():
+@token_required
+def update_record(e):
     try:
         new_update = request.get_json()
         user_id = new_update.get('user_id')
@@ -265,7 +274,8 @@ def update_record():
 
 
 @student.route('/delete-record', methods=['DELETE'])
-def delete():
+@token_required
+def delete(e):
     try:
         delStudent = request.get_json()
         user_id = delStudent.get('delUserID')
@@ -277,7 +287,8 @@ def delete():
 
 
 @student.route('/create-student-course-record', methods=['POST'])
-def create_student_course():
+@token_required
+def create_student_course(e):
     try:
         new_student_course = request.get_json()
         student_id = new_student_course.get('student_id')
@@ -290,7 +301,8 @@ def create_student_course():
 
 
 @student.route('/update-student-course-record', methods=['PUT'])
-def update_student_course():
+@token_required
+def update_student_course(e):
     try:
         new_student_course = request.get_json()
         student_id = new_student_course.get('student_id')
@@ -304,7 +316,8 @@ def update_student_course():
 
 
 @student.route('/delete-student-course-record', methods=['DELETE'])
-def delete_student_course():
+@token_required
+def delete_student_course(e):
     try:
         delStudent = request.get_json()
         course_id = delStudent.get('course_id')

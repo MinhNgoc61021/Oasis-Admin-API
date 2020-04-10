@@ -7,6 +7,7 @@ from flask import (
     jsonify
 )
 
+from controller.Authentication.Authentication import token_required
 from db.oasis_entites import Course
 from datetime import datetime
 
@@ -14,7 +15,8 @@ course = Blueprint('CourseManagement', __name__, url_prefix='/course')
 
 
 @course.route('/create-record', methods=['POST'])
-def create():
+@token_required
+def create(e):
     try:
         new_lecture = request.get_json()
         code = new_lecture.get('new_code')
@@ -34,7 +36,8 @@ def create():
 
 
 @course.route('/update-record', methods=['PUT'])
-def update_record():
+@token_required
+def update_record(e):
     try:
         new_update = request.get_json()
         course_id = new_update.get('course_id')
@@ -57,7 +60,8 @@ def update_record():
 
 
 @course.route('/search', methods=['GET'])
-def search_record():
+@token_required
+def search_record(e):
     try:
         searchCourse = request.args.get('searchCourse')
         searchRecord = Course.searchCourseRecord(str(searchCourse))
@@ -71,7 +75,8 @@ def search_record():
 
 
 @course.route('/existent-course', methods=['GET'])
-def search_existent_course():
+@token_required
+def search_existent_course(e):
     try:
         searchCode = request.args.get('searchCode')
         searchRecord = Course.searchCourseExistence(str(searchCode))
@@ -85,7 +90,8 @@ def search_existent_course():
 
 
 @course.route('/records', methods=['GET'])
-def get_records():
+@token_required
+def get_records(e):
     try:
         semester_id = request.args.get('semester_id')
         page_index = request.args.get('page_index')
@@ -107,7 +113,8 @@ def get_records():
 
 
 @course.route('/all-records', methods=['GET'])
-def get_all():
+@token_required
+def get_all(e):
     try:
         records = Course.getAllRecord()
 
@@ -120,7 +127,8 @@ def get_all():
 
 
 @course.route('/student-course', methods=['GET'])
-def get_student_course():
+@token_required
+def get_student_course(e):
     try:
         student_id = request.args.get('student_id')
 
@@ -130,7 +138,8 @@ def get_student_course():
 
 
 @course.route('/delete-record', methods=['DELETE'])
-def delete():
+@token_required
+def delete(e):
     try:
         delCourse = request.get_json()
         course_id = delCourse.get('delCourseID')

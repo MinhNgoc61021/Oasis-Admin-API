@@ -6,6 +6,8 @@ from flask import (
     request,
     jsonify
 )
+
+from controller.Authentication.Authentication import token_required
 from db.oasis_entites import Lecture
 from db.oasis_entites import User
 from datetime import datetime
@@ -14,7 +16,8 @@ lecturer = Blueprint('LecturerManagement', __name__, url_prefix='/lecturer')
 
 
 @lecturer.route('/create-record', methods=['POST'])
-def create():
+@token_required
+def create(e):
     try:
         new_lecture = request.get_json()
         username = new_lecture.get('new_username')
@@ -36,7 +39,8 @@ def create():
 
 
 @lecturer.route('/create-lecturer-course-record', methods=['POST'])
-def create_lecturer_course():
+@token_required
+def create_lecturer_course(e):
     try:
         new_lecturer_course = request.get_json()
         course_id = new_lecturer_course.get('course_id')
@@ -52,7 +56,8 @@ def create_lecturer_course():
 
 
 @lecturer.route('/update-record', methods=['PUT'])
-def update_record():
+@token_required
+def update_record(e):
     try:
         new_update = request.get_json()
         user_id = new_update.get('user_id')
@@ -74,7 +79,8 @@ def update_record():
 
 
 @lecturer.route('/records', methods=['GET'])
-def get_records():
+@token_required
+def get_records(e):
     try:
         page_index = request.args.get('page_index')
         per_page = request.args.get('per_page')
@@ -95,7 +101,8 @@ def get_records():
 
 
 @lecturer.route('/records-by-course', methods=['GET'])
-def get_records_by_course():
+@token_required
+def get_records_by_course(e):
     try:
         course_id = request.args.get('course_id')
         page_index = request.args.get('page_index')
@@ -117,7 +124,8 @@ def get_records_by_course():
 
 
 @lecturer.route('/search', methods=['GET'])
-def search_record():
+@token_required
+def search_record(e):
     try:
         searchName = request.args.get('searchName')
         searchRecord = Lecture.searchLecturerRecord(str(searchName))
@@ -131,7 +139,8 @@ def search_record():
 
 
 @lecturer.route('/search-from-course', methods=['GET'])
-def search_record_from_course():
+@token_required
+def search_record_from_course(e):
     try:
         course_id = request.args.get('course_id')
         searchName = request.args.get('searchName')
@@ -146,7 +155,8 @@ def search_record_from_course():
 
 
 @lecturer.route('/search-outside-course', methods=['GET'])
-def search_record_outside_course():
+@token_required
+def search_record_outside_course(e):
     try:
         course_id = request.args.get('course_id')
         searchName = request.args.get('searchName')
@@ -161,7 +171,8 @@ def search_record_outside_course():
 
 
 @lecturer.route('/delete-record', methods=['DELETE'])
-def delete():
+@token_required
+def delete(e):
     try:
         delStudent = request.get_json()
         user_id = delStudent.get('delUserID')
@@ -173,7 +184,8 @@ def delete():
 
 
 @lecturer.route('/delete-lecturer-course-record', methods=['DELETE'])
-def delete_lecturer_course():
+@token_required
+def delete_lecturer_course(e):
     try:
         delStudent = request.get_json()
         course_id = delStudent.get('course_id')
